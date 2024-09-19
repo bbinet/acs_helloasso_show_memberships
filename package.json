@@ -1,0 +1,21 @@
+{
+  "name": "show-members-html",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "acsdata": "node src/updateacsdata.js",
+    "build": "tsc && vite build && staticrypt ./dist/index.html -d ./dist/ -p \"$(jq -r .credentials.staticrypt.password config.json)\" --template-title \"ACS adhésions\" --template-button \"Se connecter\"",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "helloasso": "^0.0.5",
+    "natural-orderby": "^3.0.2",
+    "papercss": "^1.9.2",
+    "staticrypt": "^3.5.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1",
+    "vite-plugin-singlefile": "^2.0.2"
+  }
+}
