@@ -15,6 +15,7 @@ export const GetData = async () =>
     let page = 1;
     let totalPages;
     let payload = {
+        withCount: "true",
         withDetails: "true",
         pageSize: 100
     };
