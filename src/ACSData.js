@@ -38,7 +38,7 @@ export const GetData = async () =>
                 title(item.user.lastName.trim()),
                 item.customFields.find((elt) => elt.name == "Société").answer.toUpperCase(),
                 item.payer.email,
-                options.slice(1).join(", ")
+                options.join(", ")
             ]);
         }
         page += 1;
