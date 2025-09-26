@@ -25,5 +25,5 @@ dist-ssr
 
 config.json
 acs.json
-cron.sh
+acs.json.old
 gh-pages
