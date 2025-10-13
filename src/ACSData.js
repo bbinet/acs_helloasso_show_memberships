@@ -29,7 +29,7 @@ export const GetData = async () =>
         }
         totalPages = resp_json.pagination.totalPages;
         for (let item of resp_json.data) {
-            if (item.payments[0].refundOperations.length > 0) {
+            if (item.payments && item.payments[0].refundOperations.length > 0) {
                 continue;
             }
             let options = (item.options ?? []).map((elt) => elt.name);
