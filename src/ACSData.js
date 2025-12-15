@@ -12,22 +12,22 @@ export const GetData = async () =>
         clientId: cfg.credentials.helloasso.id,
         clientSecret:cfg.credentials.helloasso.secret,
     });
-    let page = 1;
     let totalPages;
     let payload = {
-        withCount: "true",
         withDetails: "true",
         pageSize: 100
     };
     let members = [];
-    do {
-        payload.pageIndex = page;
+    let continuationToken = null;
+    while (true) {
         const resp = await helloAsso.call(`/v5/organizations/${cfg.conf.helloasso.organization_name}/forms/${cfg.conf.helloasso.formType}/${cfg.conf.helloasso.formSlug}/items?${new URLSearchParams(payload)}`);
         const resp_json = await resp.json();
-        if (!resp_json.data) {
+        if (!resp_json.data || resp_json.data.length <= 0) {
             break;
         }
-        totalPages = resp_json.pagination.totalPages;
+        continuationToken = resp_json.pagination.continuationToken;
+        payload.continuationtoken = continuationToken;
+        //console.log(resp_json);
         for (let item of resp_json.data) {
             if (item.payments && item.payments[0].refundOperations.length > 0) {
                 continue;
@@ -41,9 +41,7 @@ export const GetData = async () =>
                 options.join(", ")
             ]);
         }
-        page += 1;
-        console.log("Page", page, totalPages);
-    } while (page <= totalPages);
+    }
 
     return `{"fields":["Prénom","Nom","Entreprise","Email","Activités"],"datas":${JSON.stringify(members)}}`;
 }
