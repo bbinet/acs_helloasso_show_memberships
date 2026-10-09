@@ -5,7 +5,14 @@ function title(str) {
     return str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-export const GetData = async () =>
+// Saisons déclarées dans config.json, de la plus récente à la plus ancienne :
+// la première est la saison en cours, les suivantes sont archivées.
+export const seasons = cfg.conf.seasons;
+
+// Nom du répertoire d'archive d'une saison : "2025/2026" => "2025-2026"
+export const seasonDir = (season) => season.name.replace(/\//g, "-");
+
+export const GetData = async (season = seasons[0]) =>
 {
     const helloAsso = new HelloAsso({
         apiBase: cfg.conf.helloasso.api_base,
@@ -20,7 +27,7 @@ export const GetData = async () =>
     let members = [];
     let continuationToken = null;
     while (true) {
-        const resp = await helloAsso.call(`/v5/organizations/${cfg.conf.helloasso.organization_name}/forms/${cfg.conf.helloasso.formType}/${cfg.conf.helloasso.formSlug}/items?${new URLSearchParams(payload)}`);
+        const resp = await helloAsso.call(`/v5/organizations/${cfg.conf.helloasso.organization_name}/forms/${cfg.conf.helloasso.formType}/${season.formSlug}/items?${new URLSearchParams(payload)}`);
         const resp_json = await resp.json();
         if (!resp_json.data || resp_json.data.length <= 0) {
             break;
@@ -43,5 +50,10 @@ export const GetData = async () =>
         }
     }
 
-    return `{"fields":["Prénom","Nom","Entreprise","Email","Activités"],"datas":${JSON.stringify(members)}}`;
+    return JSON.stringify({
+        season: season.name,
+        current: season.name === seasons[0].name,
+        fields: ["Prénom", "Nom", "Entreprise", "Email", "Activités"],
+        datas: members,
+    });
 }
