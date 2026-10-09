@@ -1,0 +1,26 @@
+name: Régénération des archives
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Publier même si les données n'ont pas changé
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Ne jamais lancer deux publications en même temps sur gh-pages
+concurrency:
+  group: gh-pages
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          config-json: ${{ secrets.CONFIG_JSON }}
+      - run: ./archives.sh ${{ inputs.force && '-f' || '' }}

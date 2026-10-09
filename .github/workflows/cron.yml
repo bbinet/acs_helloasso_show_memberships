@@ -1,0 +1,23 @@
+name: Mise à jour de la saison en cours
+
+on:
+  schedule:
+    - cron: "0 10 * * *"  # 10h00 UTC : 11h00 à Paris en heure d'hiver, 12h00 en heure d'été
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Ne jamais lancer deux publications en même temps sur gh-pages
+concurrency:
+  group: gh-pages
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          config-json: ${{ secrets.CONFIG_JSON }}
+      - run: ./cron.sh
