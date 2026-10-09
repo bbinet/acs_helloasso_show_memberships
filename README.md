@@ -55,10 +55,10 @@ directement sur Github pages :
 
     $ ./archives.sh
 
-Comme pour le cron, rien n'est publié si les données HelloAsso des saisons
-archivées n'ont pas changé depuis la dernière publication (une empreinte des
-données publiées est gardée dans `gh-pages/archives/.acs.sha256`). Pour forcer la
-publication (par exemple après une modification de la mise en page) :
+Comme pour le cron, rien n'est publié si ni les données HelloAsso des saisons
+archivées ni le code des pages n'ont changé depuis la dernière publication (une
+empreinte est gardée dans `gh-pages/archives/.acs.sha256`). Pour forcer la
+publication :
 
     $ ./archives.sh -f
 
@@ -77,11 +77,17 @@ Deux workflows ont besoin du secret `CONFIG_JSON` contenant tout le fichier
 
 - `cron.yml` exécute `cron.sh` tous les jours à 10h00 UTC (11h00 à Paris en heure
   d'hiver, 12h00 en heure d'été), et à la demande depuis l'onglet Actions
-  (« Run workflow »). `cron.sh` ne publie la page que si les données ont changé :
-  une empreinte des données publiées est gardée dans `gh-pages/.acs.sha256`.
-- `archives.yml` exécute `archives.sh`, uniquement à la demande depuis l'onglet
-  Actions. L'option « Publier même si les données n'ont pas changé » correspond
-  à `./archives.sh -f`.
+  (« Run workflow »).
+- `archives.yml` exécute `archives.sh` à la demande depuis l'onglet Actions.
+  L'option « Publier même si les données n'ont pas changé » correspond à
+  `./archives.sh -f`.
+
+Les deux workflows sont aussi lancés quand le code des pages est modifié sur
+`master` (fichiers listés dans `build_files` dans `cron.sh` et `archives.sh`).
+
+Les scripts ne publient que si les données ou le code des pages ont changé : une
+empreinte de ce qui est publié est gardée dans `gh-pages/.acs.sha256` et
+`gh-pages/archives/.acs.sha256`.
 
 La mise en ligne du site après chaque publication sur `gh-pages` est ensuite
 faite par le workflow `pages-build-deployment` de GitHub Pages.

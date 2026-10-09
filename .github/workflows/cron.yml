@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: "0 10 * * *"  # 10h00 UTC : 11h00 à Paris en heure d'hiver, 12h00 en heure d'été
   workflow_dispatch:
+  push:
+    branches: [master]
+    # Mêmes fichiers que build_files dans cron.sh et archives.sh
+    paths: [src/**, index.html, vite.config.ts, package.json, package-lock.json, .staticrypt.json]
 
 permissions:
   contents: write

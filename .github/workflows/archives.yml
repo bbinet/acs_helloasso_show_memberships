@@ -7,6 +7,10 @@ on:
         description: Publier même si les données n'ont pas changé
         type: boolean
         default: false
+  push:
+    branches: [master]
+    # Mêmes fichiers que build_files dans cron.sh et archives.sh
+    paths: [src/**, index.html, vite.config.ts, package.json, package-lock.json, .staticrypt.json]
 
 permissions:
   contents: write

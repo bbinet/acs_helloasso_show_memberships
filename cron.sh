@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Régénère la page de la saison en cours et la publie sur gh-pages si les données ont changé.
-# Une empreinte des données publiées est gardée dans gh-pages/.acs.sha256 pour le savoir.
+# Régénère la page de la saison en cours et la publie sur gh-pages si les données ou le code
+# de la page ont changé. Une empreinte de ce qui est publié est gardée dans gh-pages/.acs.sha256.
 set -e
 cd "$(dirname "$0")"
+# Fichiers servant à construire les pages : leur contenu fait partie de l'empreinte, pour que
+# les pages soient aussi republiées quand ils sont modifiés (et pas seulement quand les données changent).
+build_files="src index.html vite.config.ts package.json package-lock.json .staticrypt.json"
 
 npm run acsdata
-hash=$(sha256sum acs.json | cut -d' ' -f1)
+hash=$( { cat acs.json; git ls-files -s $build_files; } | sha256sum | cut -d' ' -f1)
 if [ "$hash" = "$(cat gh-pages/.acs.sha256 2>/dev/null)" ]; then
     echo "Nothing to do."
     exit 0
