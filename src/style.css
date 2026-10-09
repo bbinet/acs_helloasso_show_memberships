@@ -16,3 +16,6 @@ h4 { font-size:1.2rem; }
 header li a:visited { color:white; }
 table caption { font-weight: bolder; }
 .paper { margin: 0; padding: 1.5rem; }
+/* Dates des données et de la dernière vérification : en haut à droite, hors du flux */
+body { position:relative; }
+#dates { position:absolute; top:0.3rem; right:1.5rem; font-size:0.8rem; color:#888; white-space:nowrap; }
