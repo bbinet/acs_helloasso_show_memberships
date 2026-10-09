@@ -8,7 +8,8 @@
     "acsdata": "node src/updateacsdata.js",
     "build": "tsc && vite build && staticrypt ./dist/index.html -d ./dist/ -p \"$(jq -r .credentials.staticrypt.password config.json)\" --template-title \"ACS adhésions\" --template-button \"Se connecter\"",
     "archives": "node src/buildarchives.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "devDependencies": {
     "helloasso": "^0.0.5",
@@ -17,6 +18,7 @@
     "staticrypt": "^3.5.0",
     "typescript": "^5.5.3",
     "vite": "^5.4.1",
-    "vite-plugin-singlefile": "^2.0.2"
+    "vite-plugin-singlefile": "^2.0.2",
+    "vitest": "^2.1.9"
   }
 }
