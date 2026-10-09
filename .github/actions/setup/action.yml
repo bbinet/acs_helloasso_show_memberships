@@ -5,6 +5,10 @@ inputs:
   config-json:
     description: Contenu de config.json
     required: true
+  signature:
+    description: Image de la signature des factures (PNG encodé en base64), pour la page admin
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -27,6 +31,13 @@ runs:
         jq -r '.credentials | .. | strings' config.json | while read -r value; do
           [ -n "$value" ] && echo "::add-mask::$value"
         done
+
+    - name: Création de signature.png
+      if: inputs.signature != ''
+      shell: bash
+      env:
+        SIGNATURE: ${{ inputs.signature }}
+      run: printf '%s' "$SIGNATURE" | base64 -d > signature.png
 
     - name: Récupération de la branche gh-pages
       shell: bash

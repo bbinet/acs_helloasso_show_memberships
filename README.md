@@ -12,13 +12,21 @@
 
     $ npm run acsdata
 
-## Build the all-in-one encrypted web page
+## Build the all-in-one encrypted web pages
 
     $ npm run build
+
+This builds `dist/index.html` (members list) and, when an admin password is
+configured, `dist/admin/index.html` (invoices, see below).
+
+## Run the tests
+
+    $ npm test
 
 ## Publish to Github pages
 
     $ cp dist/index.html gh-pages/index.html
+    $ rm -rf gh-pages/admin && cp -r dist/admin gh-pages/admin
     $ cd gh-pages/
     $ git commit -a -m "Update index.html"
     $ git push origin gh-pages
@@ -70,10 +78,64 @@ publication :
 3. La page de la nouvelle saison sera publiée au prochain passage du cron
    (ou lancer `./cron.sh`).
 
+# Page d'administration : factures
+
+La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, différent de celui de la page des
+adhérents, qui ne change pas. Elle liste les factures de la saison en cours (une par adhésion non remboursée)
+et permet de :
+
+- voir et télécharger chaque facture en PDF, générée dans le navigateur (modèle repris de
+  `acs_helloasso_invoicing`) ;
+- envoyer une facture par email, ou toutes les factures pas encore envoyées ;
+- suivre l'envoi : envoyée, erreur, ou non distribuée (mail d'erreur reçu après l'envoi).
+
+L'envoi passe par un script Google Apps Script du compte acs.tresorier@gmail.com, qui tient aussi le registre
+des envois (un onglet par saison dans une feuille Google Sheets) : voir [apps-script/README.md](apps-script/README.md) pour l'installer.
+
+Paramètres dans `config.json` (tous facultatifs sauf le mot de passe admin) :
+
+    {
+      "conf": {
+        ...
+        "invoicing": {
+          "issuer": {
+            "name": "Nathalie Baillet",
+            "title": "Trésorière, membre du CA de l'ACS",
+            "email": "acs.tresorier@gmail.com"
+          }
+        }
+      },
+      "credentials": {
+        ...
+        "staticrypt": {
+          "password": "<mot de passe de la page des adhérents>",
+          "admin_password": "<mot de passe de la page admin>"
+        },
+        "invoicing": {
+          "script_url": "https://script.google.com/macros/s/.../exec",
+          "token": "<propriété TOKEN du script>"
+        }
+      }
+    }
+
+- Sans `admin_password`, la page admin n'est pas générée. Les mots de passe doivent faire au moins 14
+  caractères : sinon `staticrypt` demande une confirmation et la publication automatique reste bloquée.
+- `issuer` est le signataire des factures (par défaut celui indiqué ci-dessus).
+- Sans `script_url`, la page admin permet seulement de voir et télécharger les factures.
+- `script_url` est l'URL de l'application Web obtenue en déployant le script (`https://script.google.com/macros/s/.../exec`),
+  et `token` la même valeur que la propriété `TOKEN` du script : voir [apps-script/README.md](apps-script/README.md).
+
+L'image de la signature, ajoutée en bas des factures, est le fichier `signature.png` à la racine du projet
+(il n'est pas versionné). Dans GitHub Actions, elle vient du secret `INVOICE_SIGNATURE`, qui contient le PNG
+encodé en base64 (`base64 -w0 signature.png`), limité comme tout secret à 48 Ko.
+
+Changer un mot de passe, le jeton ou la signature republie les pages au prochain passage du cron.
+
 # GitHub Actions
 
 Deux workflows ont besoin du secret `CONFIG_JSON` contenant tout le fichier
-`config.json` (Settings > Secrets and variables > Actions) :
+`config.json` (Settings > Secrets and variables > Actions), et `cron.yml` du secret facultatif
+`INVOICE_SIGNATURE` (signature des factures, voir ci-dessus) :
 
 - `cron.yml` exécute `cron.sh` tous les jours à 10h00 UTC (11h00 à Paris en heure
   d'hiver, 12h00 en heure d'été), et à la demande depuis l'onglet Actions

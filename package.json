@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "vite",
     "acsdata": "node src/updateacsdata.js",
-    "build": "tsc && vite build && staticrypt ./dist/index.html -d ./dist/ -p \"$(jq -r .credentials.staticrypt.password config.json)\" --template-title \"ACS adhésions\" --template-button \"Se connecter\"",
+    "build": "tsc && vite build && staticrypt ./dist/index.html -d ./dist/ -p \"$(jq -r .credentials.staticrypt.password config.json)\" --template-title \"ACS adhésions\" --template-button \"Se connecter\" && node src/buildadmin.js",
     "archives": "node src/buildarchives.js",
     "preview": "vite preview",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/pdfmake": "^0.3.3",
     "helloasso": "^0.0.5",
     "natural-orderby": "^3.0.2",
     "papercss": "^1.9.2",

@@ -23,4 +23,5 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           config-json: ${{ secrets.CONFIG_JSON }}
+          signature: ${{ secrets.INVOICE_SIGNATURE }}
       - run: ./cron.sh
