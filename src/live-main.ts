@@ -1,6 +1,7 @@
 import 'papercss'
 import './style.css'
 import { FreeDatas2HTML, Pagination, Render, SearchEngine, Selector, SortingField } from "./FreeDatas2HTML";
+import { showSeason } from "./Season";
 import { GetData } from "./ACSData"
 
 const initialise=async () =>
@@ -8,7 +9,10 @@ const initialise=async () =>
     try {
         // Création d'un convertisseur parsant des données transmises en JSON :
         const converter=new FreeDatas2HTML("JSON");
-        converter.parser.datas2Parse= await GetData()
+        const acsData=await GetData();
+        const { season, current }=JSON.parse(acsData);
+        showSeason(season, current);
+        converter.parser.datas2Parse=acsData;
 
         // Parsage des données, qui ne sont pas encore affichées :
         await converter.run();

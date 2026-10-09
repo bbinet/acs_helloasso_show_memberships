@@ -1,11 +1,14 @@
 import 'papercss'
 import './style.css'
 import { FreeDatas2HTML, Pagination, Render, SearchEngine, Selector, SortingField } from "./FreeDatas2HTML";
-import { fields, datas } from "../acs.json"
+import { showSeason } from "./Season";
+import { season, current, fields, datas } from "../acs.json"
 
 const initialise=async () =>
 {
     try {
+        showSeason(season, current);
+
         // Création d'un convertisseur parsant des données transmises en JSON :
         const converter=new FreeDatas2HTML("JSON");
         converter.parser.datas2Parse = `{"fields": ${JSON.stringify(fields)},"datas":${JSON.stringify(datas)}}`;
