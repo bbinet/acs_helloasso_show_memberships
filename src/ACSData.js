@@ -39,6 +39,10 @@ export const GetData = async (season = seasons[0]) =>
             if (item.payments && item.payments[0].refundOperations.length > 0) {
                 continue;
             }
+            // Adhésion anonymisée par HelloAsso (pas d'adhérent et payeur vide) :
+            if (!item.user) {
+                continue;
+            }
             let options = (item.options ?? []).map((elt) => elt.name);
             members.push([
                 title(item.user.firstName.trim()),
