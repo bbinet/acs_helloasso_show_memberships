@@ -7,6 +7,7 @@
     "dev": "vite",
     "acsdata": "node src/updateacsdata.js",
     "build": "tsc && vite build && staticrypt ./dist/index.html -d ./dist/ -p \"$(jq -r .credentials.staticrypt.password config.json)\" --template-title \"ACS adhésions\" --template-button \"Se connecter\"",
+    "archives": "node src/buildarchives.js",
     "preview": "vite preview"
   },
   "devDependencies": {

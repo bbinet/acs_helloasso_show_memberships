@@ -26,4 +26,6 @@ dist-ssr
 config.json
 acs.json
 acs.json.old
+acs-archives
+acs-archives.old
 gh-pages
