@@ -82,8 +82,9 @@ Deux workflows ont besoin du secret `CONFIG_JSON` contenant tout le fichier
   L'option « Publier même si les données n'ont pas changé » correspond à
   `./archives.sh -f`.
 
-Les deux workflows sont aussi lancés quand le code des pages est modifié sur
-`master` (fichiers listés dans `build_files` dans `cron.sh` et `archives.sh`).
+Les deux workflows sont aussi lancés à chaque mise à jour de `master`, pour
+publier tout de suite une modification du code des pages (fichiers listés dans
+`build_files` dans `cron.sh` et `archives.sh`).
 
 Les scripts ne publient que si les données ou le code des pages ont changé : une
 empreinte de ce qui est publié est gardée dans `gh-pages/.acs.sha256` et
