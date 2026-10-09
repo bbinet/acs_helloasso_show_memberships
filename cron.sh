@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
+# Régénère la page de la saison en cours et la publie sur gh-pages si les données ont changé.
+# Une empreinte des données publiées est gardée dans gh-pages/.acs.sha256 pour le savoir.
+set -e
+cd "$(dirname "$0")"
 
-(cd /home/acs-technolac/acs_helloasso_show_memberships;
-    cp acs.json acs.json.old;
-    npm run acsdata;
-    cmp -s acs.json acs.json.old && echo "Nothing to do." && exit 0;
-    npm run build;
+npm run acsdata
+hash=$(sha256sum acs.json | cut -d' ' -f1)
+if [ "$hash" = "$(cat gh-pages/.acs.sha256 2>/dev/null)" ]; then
+    echo "Nothing to do."
+    exit 0
+fi
+npm run build
 
-    (cd /home/acs-technolac/acs_helloasso_show_memberships/gh-pages;
-        cp ../dist/index.html index.html;
-        git commit -a -m "Update index.html" && git push
-    )
-)
+cd gh-pages
+cp ../dist/index.html index.html
+echo "$hash" > .acs.sha256
+git add index.html .acs.sha256
+git diff --cached --quiet && echo "Nothing to do." && exit 0
+git commit -m "Update index.html"
+git push

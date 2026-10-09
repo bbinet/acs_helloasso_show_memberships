@@ -1,0 +1,37 @@
+name: Préparation
+description: Installe les dépendances, crée config.json et récupère la branche gh-pages
+
+inputs:
+  config-json:
+    description: Contenu de config.json
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+    - run: npm ci
+      shell: bash
+
+    - name: Création de config.json
+      shell: bash
+      env:
+        CONFIG_JSON: ${{ inputs.config-json }}
+      run: |
+        printf '%s' "$CONFIG_JSON" > config.json
+        # GitHub ne masque dans les logs que le secret entier : on masque aussi chaque identifiant
+        jq -r '.credentials | .. | strings' config.json | while read -r value; do
+          [ -n "$value" ] && echo "::add-mask::$value"
+        done
+
+    - name: Récupération de la branche gh-pages
+      shell: bash
+      run: |
+        git fetch --depth=1 origin gh-pages:refs/remotes/origin/gh-pages
+        git worktree add -B gh-pages gh-pages origin/gh-pages
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898299+github-actions[bot]@users.noreply.github.com"
