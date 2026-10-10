@@ -65,7 +65,8 @@ export const MembersData = (items, season = seasons[0]) =>
 
 // Données de la page d'administration (acs-admin.json) : factures et paramètres d'envoi.
 // Contient l'adresse et le jeton du script d'envoi : ne doit être intégré qu'à la page admin.
-export const AdminData = (items, season = seasons[0]) =>
+// history : dates d'inscription des saisons archivées, [{ season, dates }], pour les comparer à la saison en cours
+export const AdminData = (items, season = seasons[0], history = []) =>
 {
     const invoicing = cfg.conf.invoicing ?? {};
     const credentials = cfg.credentials.invoicing ?? {};
@@ -81,7 +82,11 @@ export const AdminData = (items, season = seasons[0]) =>
         // Image de la signature : fichier signature.png, s'il existe (secret INVOICE_SIGNATURE dans GitHub Actions)
         signature: fs.existsSync("signature.png") ? `data:image/png;base64,${fs.readFileSync("signature.png").toString("base64")}` : null,
         service: credentials.script_url ? { url: credentials.script_url, token: credentials.token } : null,
+        history,
     });
 }
+
+// Dates d'inscription d'une saison (adhésions non remboursées)
+export const SeasonDates = (items) => items.map(buildInvoice).filter(Boolean).map((invoice) => invoice.date);
 
 export const GetData = async (season = seasons[0]) => MembersData(await GetItems(season), season);

@@ -1,5 +1,5 @@
 // Page d'administration (admin/) : factures des adhérents de la saison en cours (aperçu, envoi par email),
-// exports.
+// exports et statistiques.
 import 'papercss'
 import './style.css'
 import { showDates } from "./Dates";
@@ -9,15 +9,17 @@ import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
 import { emailList, toCsv, uniqueByEmail } from "./Export";
+import { renderStats, type SeasonHistory } from "./AdminStats";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
 
-const { season, invoices, issuer, signature, service: serviceConfig } = adminData as {
+const { season, invoices, issuer, signature, service: serviceConfig, history } = adminData as {
     season: string;
     invoices: Invoice[];
     issuer: Issuer;
     signature: string | null;
     service: { url: string; token: string } | null;
+    history?: SeasonHistory[];
 };
 const settings = { issuer, signature };
 const service = serviceConfig ? new InvoiceService(serviceConfig.url, serviceConfig.token, season) : null;
@@ -258,6 +260,21 @@ const fillSelect = (id: string, names: string[]) => element(id).insertAdjacentHT
     names.map((name) => `<option value="${escape(name)}">${escape(name)}</option>`).join(""));
 fillSelect("activity", [...[...new Set(invoices.flatMap((invoice) => invoice.activities))].sort((a, b) => a.localeCompare(b, "fr")), NO_ACTIVITY]);
 fillSelect("formula", [...new Set(invoices.map((invoice) => invoice.formula))].sort((a, b) => a.localeCompare(b, "fr")));
+
+// Onglets ; les statistiques sont calculées à l'ouverture de l'onglet, avec les derniers statuts d'envoi
+const showTab = (tab: string) => {
+    document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button) =>
+        button.setAttribute("aria-selected", String(button.dataset.tab === tab)));
+    element("tab-list").hidden = tab !== "list";
+    element("tab-stats").hidden = tab !== "stats";
+    if (tab === "stats")
+        renderStats(element("stats"), season, invoices, statuses, history ?? []).catch((e) => {
+            console.error(e);
+            element("stats").insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape((e as Error).message)}</p>`);
+        });
+};
+document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button) =>
+    button.addEventListener("click", () => showTab(button.dataset.tab!)));
 
 const initialise = async () => {
     element("season").textContent = season;

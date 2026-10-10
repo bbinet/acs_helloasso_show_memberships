@@ -78,20 +78,32 @@ publication :
 3. La page de la nouvelle saison sera publiée au prochain passage du cron
    (ou lancer `./cron.sh`).
 
-# Page d'administration : factures
+# Page d'administration : factures et statistiques
 
 La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, différent de celui de la page des
-adhérents, qui ne change pas. Elle liste les factures de la saison en cours (une par adhésion non remboursée),
-100 par page, et permet de :
+adhérents, qui ne change pas. Elle a deux onglets.
 
-- chercher une facture (nom, entreprise, email, n°) et filtrer par activité, tarif, période d'inscription et
-  statut d'envoi ;
-- exporter la liste filtrée en CSV (pour Excel) et copier ses emails, au format `"Prénom Nom" <email>`, à
-  coller dans un mail ;
-- voir et télécharger chaque facture en PDF, générée dans le navigateur (modèle repris de
-  `acs_helloasso_invoicing`) ;
-- envoyer une facture par email, les factures cochées, ou toutes celles pas encore envoyées ;
-- suivre l'envoi : envoyée, erreur, ou non distribuée (mail d'erreur reçu après l'envoi).
+**Factures et exports** : la liste des adhésions de la saison en cours (une par adhésion non remboursée),
+100 par page, avec :
+
+- une recherche (nom, entreprise, email, n°) et des filtres par activité, tarif, période d'inscription et
+  statut d'envoi de la facture ;
+- l'export CSV de la liste filtrée (pour Excel) et la copie des emails de la liste filtrée, au format
+  `"Prénom Nom" <email>`, à coller dans un mail ;
+- pour chaque adhésion, la facture en PDF, générée dans le navigateur (modèle repris de
+  `acs_helloasso_invoicing`), à voir, télécharger ou envoyer par email ; l'envoi groupé des factures cochées
+  ou de toutes celles pas encore envoyées ;
+- le suivi de l'envoi : envoyée, erreur, ou non distribuée (mail d'erreur reçu après l'envoi).
+
+**Statistiques** : chiffres clés (adhérents, montant encaissé, factures envoyées, à envoyer, en erreur),
+inscriptions au fil de la saison et comparaison avec les saisons précédentes, adhérents et recettes par
+activité (avec la liste des adhérents), envoi des factures par activité, tarifs, inscriptions par mois et nombre
+d'activités par adhérent. Les activités et les tarifs sont ceux de HelloAsso : un changement de nom ou une
+nouvelle activité y apparaît automatiquement. Pour la comparaison, le cron récupère aussi chaque jour les dates
+d'inscription des saisons archivées.
+
+Les graphes (Chart.js) et la génération des PDF (pdfmake) sont chargés depuis jsDelivr, avec une empreinte
+d'intégrité, plutôt qu'intégrés à la page chiffrée.
 
 L'envoi passe par un script Google Apps Script du compte acs.tresorier@gmail.com, qui tient aussi le registre
 des envois (un onglet par saison dans une feuille Google Sheets) : voir [apps-script/README.md](apps-script/README.md) pour l'installer.

@@ -28,8 +28,21 @@ body { position:relative; }
 input.search { width:100%; }
 #invoices td.select, #invoices th.select { width:2rem; }
 #pages button { margin:0.2rem; }
+/* Page admin : onglets */
+nav.tabs { display:flex; gap:0.5rem; margin:1rem 0; border-bottom:2px solid #41403e; }
+nav.tabs button { border-bottom:none; border-radius:15px 15px 0 0; margin-bottom:-2px; }
+nav.tabs button[aria-selected="true"] { background:#41403e; color:#fff; }
 .filters label { margin:0; font-size:0.9rem; }
 .filters input[type="date"] { width:100%; }
 td.activities { font-size:0.9rem; }
+/* Page admin : statistiques */
+.tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(11rem, 1fr)); gap:1rem; margin:1rem 0 2rem; }
+.tile { border:2px solid #41403e; border-radius:255px 15px 225px 15px/15px 225px 15px 255px; padding:0.8rem 1rem; }
+.tile .value { font-size:2rem; line-height:1.2; }
+.tile .label { font-size:0.9rem; color:#52514e; }
+.chart { position:relative; height:22rem; margin-bottom:1rem; }
+.stats-block { margin-bottom:2.5rem; }
+.stats-block details { margin:0.2rem 0; }
+.stats-block details ul { font-size:0.9rem; columns:2; }
 /* Listes de filtres : jamais plus larges que leur colonne (les noms de tarifs sont longs) */
 .filters select { width:100%; max-width:100%; text-overflow:ellipsis; }
