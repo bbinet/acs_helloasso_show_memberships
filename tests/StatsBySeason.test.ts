@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activitiesBySeason, totalsBySeason } from "../src/Stats";
+import { activitiesBySeason, bySeasonMonth, totalsBySeason } from "../src/Stats";
 import { NO_ACTIVITY } from "../src/InvoiceFilter";
 
 const member = (date: string, activities: string[] = [], total = 20) => ({ date, activities, formula: "Adhésion", total });
@@ -12,12 +12,38 @@ const seasons = [
 ];
 
 describe("totalsBySeason", () => {
+    // Aujourd'hui : 10 octobre de la saison en cours
+    const totals = totalsBySeason(seasons, "2026-10-10");
+
     it("donne le nombre d'adhérents et le montant encaissé de chaque saison, de la plus ancienne à la plus récente", () => {
-        expect(totalsBySeason(seasons)).toEqual([
+        expect(totals.map(({ season, members, revenue }) => ({ season, members, revenue }))).toEqual([
             { season: "2024-2025", members: 2, revenue: 40 },
             { season: "2025-2026", members: 4, revenue: 80 },
             { season: "2026-2027", members: 2, revenue: 75.5 },
         ]);
+    });
+
+    it("donne aussi les adhérents et le montant encaissé de chaque saison au même jour de saison qu'aujourd'hui", () => {
+        // Au 10 octobre 2025 : les inscrits du 2 et du 20 septembre
+        expect(totals.map(({ season, membersAtSameDay, revenueAtSameDay }) => [season, membersAtSameDay, revenueAtSameDay])).toEqual([
+            ["2024-2025", 2, 40],
+            ["2025-2026", 2, 40],
+            ["2026-2027", 2, 75.5],
+        ]);
+    });
+});
+
+describe("bySeasonMonth", () => {
+    it("compte les inscriptions de chaque mois de la saison, de septembre à août", () => {
+        const counts = bySeasonMonth("2025-2026", seasons[1].members);
+        expect(counts).toHaveLength(12);
+        // septembre : 2, décembre : 1, janvier : 1
+        expect(counts).toEqual([2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0]);
+    });
+
+    it("compte une inscription faite avant septembre en septembre, et après août en août", () => {
+        expect(bySeasonMonth("2025-2026", [member("2025-07-15"), member("2026-08-31"), member("2026-09-02")]))
+            .toEqual([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]);
     });
 });
 

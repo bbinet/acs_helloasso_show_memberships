@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityCounts, byActivity, byFormula, byMonth, cumulative, keyFigures, seasonCurve } from "../src/Stats";
+import { activityCounts, byActivity, byFormula, cumulative, keyFigures, seasonCurve } from "../src/Stats";
 import { NO_ACTIVITY } from "../src/InvoiceFilter";
 import { invoice } from "./fixtures";
 
@@ -41,19 +41,6 @@ describe("byFormula", () => {
             { name: "Adhésion", count: 2, revenue: 40 },
             { name: "Adhésion + salle", count: 1, revenue: 60 },
         ]);
-    });
-});
-
-describe("byMonth", () => {
-    it("compte les inscriptions de chaque mois, mois sans inscription compris", () => {
-        const list = [invoice(1, { date: "2026-08-30" }), invoice(2, { date: "2026-08-02" }), invoice(3, { date: "2026-10-01" })];
-        expect(byMonth(list)).toEqual([
-            { month: "2026-08", count: 2 },
-            { month: "2026-09", count: 0 },
-            { month: "2026-10", count: 1 },
-        ]);
-        expect(byMonth([invoice(1, { date: "2026-12-31" }), invoice(2, { date: "2027-01-01" })]).map((m) => m.month)).toEqual(["2026-12", "2027-01"]);
-        expect(byMonth([])).toEqual([]);
     });
 });
 

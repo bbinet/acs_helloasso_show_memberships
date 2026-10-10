@@ -65,23 +65,8 @@ export function byFormula(invoices: Invoice[]) {
         .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr"));
 }
 
-// Inscriptions par mois ("2026-09"), du premier au dernier mois, y compris les mois sans inscription
-export function byMonth(invoices: Invoice[]) {
-    if (invoices.length === 0)
-        return [];
-    const months = invoices.map((invoice) => invoice.date.slice(0, 7)).sort();
-    const result: { month: string; count: number }[] = [];
-    let [year, month] = months[0].split("-").map(Number);
-    for (let current = months[0]; current <= months[months.length - 1];) {
-        result.push({ month: current, count: months.filter((m) => m === current).length });
-        [year, month] = month === 12 ? [year + 1, 1] : [year, month + 1];
-        current = `${year}-${String(month).padStart(2, "0")}`;
-    }
-    return result;
-}
-
 // Nombre d'adhérents sans activité, avec 1, 2, puis 3 activités et plus
-export function activityCounts(invoices: Invoice[]): [number, number, number, number] {
+export function activityCounts(invoices: { activities: string[] }[]): [number, number, number, number] {
     const counts: [number, number, number, number] = [0, 0, 0, 0];
     for (const invoice of invoices)
         counts[Math.min(invoice.activities.length, 3)]++;
@@ -118,11 +103,37 @@ export interface SeasonMembers {
 export const seasonDay = (season: string, date: string) =>
     Math.round((Date.parse(`${date}T00:00:00Z`) - Date.UTC(Number(season.slice(0, 4)), 6, 1)) / DAY);
 
-// Adhérents et montant encaissé de chaque saison (données de la plus récente à la plus ancienne),
-// de la plus ancienne à la plus récente
-export function totalsBySeason(seasons: SeasonMembers[]) {
-    return [...seasons].reverse().map(({ season, members }) =>
-        ({ season, members: members.length, revenue: sum(members.map((member) => member.total)) }));
+// Adhésions d'une saison inscrites au plus tard au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ ») dans la
+// saison en cours : pour comparer une saison passée à la saison en cours, qui n'est pas terminée
+export const untilSameDay = <T extends { date: string }>(season: string, members: T[], currentSeason: string, today: string) =>
+    members.filter((member) => seasonDay(season, member.date) <= seasonDay(currentSeason, today));
+
+// Adhérents et montant encaissé de chaque saison (données de la plus récente à la plus ancienne), en fin de saison
+// et au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ »), de la plus ancienne à la plus récente
+export function totalsBySeason(seasons: SeasonMembers[], today: string) {
+    const currentSeason = seasons[0].season;
+    return [...seasons].reverse().map(({ season, members }) => {
+        const atSameDay = untilSameDay(season, members, currentSeason, today);
+        return {
+            season,
+            members: members.length,
+            revenue: sum(members.map((member) => member.total)),
+            membersAtSameDay: atSameDay.length,
+            revenueAtSameDay: sum(atSameDay.map((member) => member.total)),
+        };
+    });
+}
+
+// Inscriptions de chaque mois de la saison, de septembre (0) à août (11) : une inscription faite avant septembre
+// compte en septembre, après août en août
+export function bySeasonMonth(season: string, members: { date: string }[]) {
+    const counts = Array<number>(12).fill(0);
+    const firstYear = Number(season.slice(0, 4));
+    for (const { date } of members) {
+        const index = (Number(date.slice(0, 4)) - firstYear) * 12 + Number(date.slice(5, 7)) - 9;
+        counts[Math.min(11, Math.max(0, index))]++;
+    }
+    return counts;
 }
 
 const activitiesOf = (member: SeasonMembers["members"][number]) => (member.activities.length ? member.activities : [NO_ACTIVITY]);
@@ -140,9 +151,7 @@ export function activitiesBySeason(seasons: SeasonMembers[], today: string) {
     const ordered = [...seasons].reverse();
     const counts = ordered.map(({ members }) => countActivities(members));
     const [current, previous] = seasons;
-    const sameDay = previous
-        ? countActivities(previous.members.filter((member) => seasonDay(previous.season, member.date) <= seasonDay(current.season, today)))
-        : null;
+    const sameDay = previous ? countActivities(untilSameDay(previous.season, previous.members, current.season, today)) : null;
     const names = [...new Set(counts.flatMap((count) => [...count.keys()]))];
     const currentCounts = counts[counts.length - 1];
     const previousCounts = counts.length > 1 ? counts[counts.length - 2] : new Map<string, number>();

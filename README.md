@@ -101,9 +101,10 @@ téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par
 **Statistiques**, en trois sous-onglets :
 - **Bilan de saison** : chiffres clés (adhérents, montant encaissé, factures envoyées, à envoyer, en erreur),
   inscriptions depuis le début de la saison, adhérents par tarif, adhérents et recettes par activité (avec la
-  liste des adhérents), inscriptions par mois et nombre d'activités par adhérent ;
+  liste des adhérents) et nombre d'activités par adhérent ;
 - **Comparaison des saisons** : inscriptions au fil de la saison comparées à toutes les saisons précédentes,
-  adhérents et montant encaissé par saison ;
+  adhérents et montant encaissé de chaque saison au même jour qu'aujourd'hui et en fin de saison, puis
+  inscriptions par mois (de septembre à août) et nombre d'activités par adhérent face à la saison précédente ;
 - **Comparaison des saisons par activité** : les adhérents de chaque activité saison par saison, avec l'écart
   par rapport à la saison précédente au même jour de saison, et un graphe par activité.
 

@@ -47,6 +47,8 @@ td.activities { font-size:0.9rem; }
 .stats-block h3 { margin:0 0 0.3rem; font-size:1.35rem; }
 .stats-block .note { margin:0 0 0.8rem; font-size:0.85rem; color:#6b6a65; }
 .stats-block table { background:#fff; }
+/* Deux blocs côte à côte sur les écrans larges */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(26rem, 100%), 1fr)); gap:0 1.5rem; }
 /* Sous-onglets des statistiques */
 nav.subtabs { display:flex; flex-wrap:wrap; gap:0.5rem; margin:0 0 1.5rem; }
 nav.subtabs button { font-size:0.95rem; padding:0.4rem 1rem; border-radius:999px; }
