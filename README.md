@@ -100,8 +100,8 @@ téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par
 
 **Statistiques** : chiffres clés (adhérents, montant encaissé, factures envoyées, à envoyer, en erreur),
 inscriptions au fil de la saison et comparaison avec toutes les saisons précédentes, adhérents et montant
-encaissé par saison, adhérents et recettes par activité (avec la liste des adhérents), envoi des factures par
-activité, tarifs, inscriptions par mois et nombre d'activités par adhérent.
+encaissé par saison, adhérents par tarif, adhérents et recettes par activité (avec la liste des adhérents), envoi
+des factures par activité, inscriptions par mois et nombre d'activités par adhérent.
 
 **Statistiques par activité** : les adhérents de chaque activité saison par saison, avec l'écart par rapport à la
 saison précédente au même jour de saison, et un graphe par activité.

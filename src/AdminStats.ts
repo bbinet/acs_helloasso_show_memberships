@@ -135,6 +135,14 @@ export async function renderStats(container: HTMLElement, season: string, invoic
       </div>` : ""}
 
       <div class="stats-block">
+        <h3>Adhérents par tarif</h3>
+        <table>
+          <thead><tr><th>Tarif</th><th>Adhérents</th><th>Recettes du tarif (sans les options)</th></tr></thead>
+          <tbody>${formulas.map((formula) => `<tr><td>${escape(formula.name)}</td><td>${formula.count}</td><td>${euros(formula.revenue)}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+
+      <div class="stats-block">
         <h3>Adhérents par activité</h3>
         <div class="chart" style="height:${activitiesHeight}"><canvas id="chart-activities" aria-label="Adhérents par activité"></canvas></div>
         <table>
@@ -153,14 +161,6 @@ export async function renderStats(container: HTMLElement, season: string, invoic
       <div class="stats-block">
         <h3>Envoi des factures par activité</h3>
         <div class="chart" style="height:${activitiesHeight}"><canvas id="chart-status" aria-label="Statut des factures par activité"></canvas></div>
-      </div>
-
-      <div class="stats-block">
-        <h3>Tarifs</h3>
-        <table>
-          <thead><tr><th>Tarif</th><th>Adhérents</th><th>Recettes du tarif (sans les options)</th></tr></thead>
-          <tbody>${formulas.map((formula) => `<tr><td>${escape(formula.name)}</td><td>${formula.count}</td><td>${euros(formula.revenue)}</td></tr>`).join("")}</tbody>
-        </table>
       </div>
 
       <div class="stats-block">
