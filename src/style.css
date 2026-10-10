@@ -48,3 +48,8 @@ td.activities { font-size:0.9rem; }
 .filters select { width:100%; max-width:100%; text-overflow:ellipsis; }
 /* Recherche de la liste des adhérents : toute la largeur de sa colonne */
 #freeDatas2HTMLSearchTxt { width:100%; }
+/* Statistiques par activité : tableau par saison et un petit graphe par activité */
+table.by-season td, table.by-season th { text-align:center; }
+table.by-season td:first-child, table.by-season th:first-child { text-align:left; }
+.small-multiples { display:grid; grid-template-columns:repeat(auto-fill, minmax(18rem, 1fr)); gap:1rem 2rem; }
+.small-multiples h4 { margin:0.5rem 0; }

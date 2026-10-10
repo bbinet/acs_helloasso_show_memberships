@@ -9,7 +9,7 @@ import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
 import { emailList, toCsv, uniqueByEmail } from "./Export";
-import { renderStats, type SeasonHistory } from "./AdminStats";
+import { renderActivityStats, renderStats, type SeasonHistory } from "./AdminStats";
 import { showMembersTable } from "./MembersTable";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
@@ -271,11 +271,15 @@ const showTab = (tab: string) => {
     element("tab-members").hidden = tab !== "members";
     element("tab-list").hidden = tab !== "list";
     element("tab-stats").hidden = tab !== "stats";
+    element("tab-activities").hidden = tab !== "activities";
+    const failed = (id: string) => (e: Error) => {
+        console.error(e);
+        element(id).insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape(e.message)}</p>`);
+    };
     if (tab === "stats")
-        renderStats(element("stats"), season, invoices, statuses, history ?? []).catch((e) => {
-            console.error(e);
-            element("stats").insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape((e as Error).message)}</p>`);
-        });
+        renderStats(element("stats"), season, invoices, statuses, history ?? []).catch(failed("stats"));
+    if (tab === "activities")
+        renderActivityStats(element("activity-stats"), season, invoices, history ?? []).catch(failed("activity-stats"));
 };
 document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button) =>
     button.addEventListener("click", () => showTab(button.dataset.tab!)));

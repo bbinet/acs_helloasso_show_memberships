@@ -81,7 +81,7 @@ publication :
 # Page d'administration : adhérents, factures et statistiques
 
 La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, différent de celui de la page des
-adhérents, qui ne change pas. Elle a trois onglets.
+adhérents, qui ne change pas. Elle a quatre onglets.
 
 **Adhérents** (onglet ouvert par défaut) : la même liste que la page des adhérents, avec le filtre par activité,
 la recherche et le tri.
@@ -102,6 +102,9 @@ téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par
 inscriptions au fil de la saison et comparaison avec toutes les saisons précédentes, adhérents et montant
 encaissé par saison, adhérents et recettes par activité (avec la liste des adhérents), envoi des factures par
 activité, tarifs, inscriptions par mois et nombre d'activités par adhérent.
+
+**Statistiques par activité** : les adhérents de chaque activité saison par saison, avec l'écart par rapport à la
+saison précédente au même jour de saison, et un graphe par activité.
 
 Les activités et les tarifs sont ceux de HelloAsso : un changement de nom ou une nouvelle activité y apparaît
 automatiquement. Pour les comparaisons, le cron garde un résumé de chaque saison archivée (date, activités, tarif

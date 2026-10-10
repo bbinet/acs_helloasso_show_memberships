@@ -1,10 +1,11 @@
-// Onglet « Statistiques » de la page admin : chiffres clés, tableaux et graphes (Chart.js, chargé depuis jsDelivr)
+// Onglets « Statistiques » et « Statistiques par activité » de la page admin : chiffres clés, tableaux et graphes
+// (Chart.js, chargé depuis jsDelivr)
 import type { Chart as ChartJs, ChartConfiguration } from "chart.js";
 import type { Invoice } from "./InvoiceData.js";
 import { statusCategory, type InvoiceStatus } from "./InvoiceService";
 import { loadScript } from "./loadScript";
 import { escape, euros } from "./format";
-import { activityCounts, byActivity, byFormula, byMonth, cumulative, keyFigures, seasonCurve, totalsBySeason,
+import { activitiesBySeason, activityCounts, byActivity, byFormula, byMonth, cumulative, keyFigures, seasonCurve, totalsBySeason,
          type SeasonMembers } from "./Stats";
 
 const CHARTJS = {
@@ -66,6 +67,9 @@ const seasonColor = (index: number, count: number) => {
 // Barres par saison : la saison en cours, pas terminée, en bleu plus clair
 const CURRENT = "#8fb8ea";
 const seasonBars = (seasons: string[], current: string) => seasons.map((name) => (name === current ? CURRENT : SERIES[0]));
+
+// Aujourd'hui (« AAAA-MM-JJ »), à Paris
+const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
 
 const bar = { borderRadius: 4, borderSkipped: "start" as const, maxBarThickness: 28 };
 const line = (label: string, data: (number | null)[], color: string, stepped = false) =>
@@ -261,3 +265,46 @@ export async function renderStats(container: HTMLElement, season: string, invoic
     });
 }
 
+// Onglet « Statistiques par activité » : tableau des adhérents de chaque activité saison par saison,
+// puis un petit graphe par activité, tous à la même échelle pour pouvoir les comparer
+export async function renderActivityStats(container: HTMLElement, season: string, invoices: Invoice[], history: SeasonHistory[]) {
+    charts.forEach((chart) => chart.destroy());
+    charts = [];
+    const date = today();
+    const table = activitiesBySeason([{ season, members: invoices }, ...history], date);
+    const max = Math.max(1, ...table.rows.flatMap((row) => row.counts));
+    // Cellule teintée de bleu, d'autant plus foncé que l'effectif est grand
+    const cell = (count: number) => `<td style="background:rgba(42,120,214,${(0.08 + 0.5 * count / max).toFixed(2)})">${count}</td>`;
+    const change = (value: number | null) => value === null ? "" : value > 0 ? `▲ +${value}` : value < 0 ? `▼ ${value}` : "=";
+    const sameDay = `${Number(date.slice(8, 10))} ${MONTHS[Number(date.slice(5, 7)) - 1]}`;
+
+    container.innerHTML = `
+      <div class="stats-block">
+        <h3>Adhérents par activité et par saison</h3>
+        <table class="by-season">
+          <thead><tr><th>Activité</th>${table.seasons.map((name) => `<th>${escape(name)}${name === season ? " (en cours)" : ""}</th>`).join("")}
+            ${table.previousSeason ? `<th>Écart avec la saison ${escape(table.previousSeason)} au même jour (${sameDay})</th>` : ""}</tr></thead>
+          <tbody>${table.rows.map((row) => `<tr><td>${escape(row.name)}</td>${row.counts.map(cell).join("")}
+            ${table.previousSeason ? `<td title="${row.previousAtSameDay} adhérent(s) au ${sameDay} de la saison ${escape(table.previousSeason)}">${change(row.change)}</td>` : ""}</tr>`).join("")}
+          </tbody>
+        </table>
+        ${table.previousSeason ? `<p><small>La saison en cours n'est pas terminée : l'écart la compare à la saison ${escape(table.previousSeason)}
+          à la même date de saison (${sameDay}), et non à toute la saison ${escape(table.previousSeason)}.</small></p>` : ""}
+      </div>
+
+      <div class="stats-block">
+        <h3>Évolution de chaque activité</h3>
+        <p><small>Même échelle pour toutes les activités. La saison en cours, pas terminée, est en bleu clair.</small></p>
+        <div class="small-multiples">${table.rows.map((row, index) => `
+          <div><h4>${escape(row.name)}</h4><div class="chart" style="height:11rem"><canvas id="chart-activity-${index}" aria-label="${escape(row.name)} par saison"></canvas></div></div>`).join("")}
+        </div>
+      </div>`;
+
+    await loadScript(CHARTJS);
+    table.rows.forEach((row, index) => draw(`chart-activity-${index}`, {
+        type: "bar",
+        data: { labels: table.seasons, datasets: [{ label: "Adhérents", data: row.counts, backgroundColor: seasonBars(table.seasons, season), ...bar }] },
+        // Même échelle pour toutes les activités
+        options: { scales: { ...axes(), y: { ...axes().y, max } } },
+    }));
+}

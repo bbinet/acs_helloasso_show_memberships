@@ -128,3 +128,44 @@ export function totalsBySeason(seasons: SeasonMembers[]) {
     return [...seasons].reverse().map(({ season, members }) =>
         ({ season, members: members.length, revenue: sum(members.map((member) => member.total)) }));
 }
+
+const activitiesOf = (member: SeasonMembers["members"][number]) => (member.activities.length ? member.activities : [NO_ACTIVITY]);
+const countActivities = (members: SeasonMembers["members"]) => {
+    const counts = new Map<string, number>();
+    for (const member of members)
+        for (const name of activitiesOf(member))
+            counts.set(name, (counts.get(name) ?? 0) + 1);
+    return counts;
+};
+
+// Adhérents par activité et par saison (de la plus ancienne à la plus récente), et comparaison de la saison
+// en cours avec la précédente au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ »)
+export function activitiesBySeason(seasons: SeasonMembers[], today: string) {
+    const ordered = [...seasons].reverse();
+    const counts = ordered.map(({ members }) => countActivities(members));
+    const [current, previous] = seasons;
+    const sameDay = previous
+        ? countActivities(previous.members.filter((member) => seasonDay(previous.season, member.date) <= seasonDay(current.season, today)))
+        : null;
+    const names = [...new Set(counts.flatMap((count) => [...count.keys()]))];
+    const currentCounts = counts[counts.length - 1];
+    const previousCounts = counts.length > 1 ? counts[counts.length - 2] : new Map<string, number>();
+    return {
+        seasons: ordered.map(({ season }) => season),
+        previousSeason: previous?.season ?? null,
+        rows: names
+            .map((name) => {
+                const previousAtSameDay = sameDay ? sameDay.get(name) ?? 0 : null;
+                return {
+                    name,
+                    counts: counts.map((count) => count.get(name) ?? 0),
+                    previousAtSameDay,
+                    change: previousAtSameDay === null ? null : (currentCounts.get(name) ?? 0) - previousAtSameDay,
+                };
+            })
+            .sort((a, b) => Number(a.name === NO_ACTIVITY) - Number(b.name === NO_ACTIVITY)
+                || (currentCounts.get(b.name) ?? 0) - (currentCounts.get(a.name) ?? 0)
+                || (previousCounts.get(b.name) ?? 0) - (previousCounts.get(a.name) ?? 0)
+                || a.name.localeCompare(b.name, "fr")),
+    };
+}
