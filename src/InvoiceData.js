@@ -46,3 +46,12 @@ export function buildInvoice(item) {
         formula: item.name,
     };
 }
+
+/**
+ * @typedef {{ date: string, activities: string[], formula: string, total: number }} MemberSummary
+ */
+
+/** Résumé d'une adhésion pour les statistiques des saisons passées : aucune donnée personnelle */
+export function summarize(invoice) {
+    return { date: invoice.date, activities: invoice.activities, formula: invoice.formula, total: invoice.total };
+}

@@ -4,27 +4,29 @@ import type { Invoice } from "./InvoiceData.js";
 import { statusCategory, type InvoiceStatus } from "./InvoiceService";
 import { loadScript } from "./loadScript";
 import { escape, euros } from "./format";
-import { activityCounts, byActivity, byFormula, byMonth, cumulative, keyFigures, seasonCurve } from "./Stats";
+import { activityCounts, byActivity, byFormula, byMonth, cumulative, keyFigures, seasonCurve,
+         type SeasonMembers } from "./Stats";
 
 const CHARTJS = {
     src: "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js",
     integrity: "sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ",
 };
 
-// Couleurs : une série = bleu ; saisons comparées = bleu, orange, vert d'eau (palette validée pour les daltoniens) ;
-// statuts d'envoi = vert (envoyée), gris (à envoyer), rouge (en erreur)
-const SERIES = ["#2a78d6", "#eb6834", "#1baf7a"];
+// Couleurs : une série = bleu ; saison en cours et saison précédente = bleu et orange (palette validée pour les
+// daltoniens), saisons plus anciennes en gris ; statuts d'envoi = vert (envoyée), gris (à envoyer), rouge (en erreur)
+const SERIES = ["#2a78d6", "#eb6834"];
 const STATUS = { sent: "#0ca30c", todo: "#c3c2b7", problems: "#d03b3b" };
 const MUTED = "#898781";
 const GRID = "#e1e0d9";
 const MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 
 type Statuses = Record<string, InvoiceStatus>;
-export interface SeasonHistory { season: string; dates: string[] }
+// Saisons archivées, de la plus récente à la plus ancienne
+export type SeasonHistory = SeasonMembers;
 
 const shortDate = (date: string) => `${Number(date.slice(8, 10))} ${MONTHS[Number(date.slice(5, 7)) - 1]}`;
 // Jour de saison (depuis le 1er juillet) => « 15 sept. »
-const seasonDay = (day: number) => shortDate(new Date(Date.UTC(2001, 6, 1) + day * 86400000).toISOString().slice(0, 10));
+const seasonDayLabel = (day: number) => shortDate(new Date(Date.UTC(2001, 6, 1) + day * 86400000).toISOString().slice(0, 10));
 
 let charts: ChartJs[] = [];
 
@@ -48,6 +50,17 @@ const draw = (id: string, config: ChartConfiguration, legend = false) => {
             plugins: { legend: { display: legend, labels: { color: MUTED, usePointStyle: true } } },
         },
     } as ChartConfiguration));
+};
+
+// Couleur de la saison n° index (0 = en cours) sur count saisons : bleu, orange, puis des gris du plus sombre
+// (la plus récente des anciennes saisons) au plus clair (la plus ancienne)
+const seasonColor = (index: number, count: number) => {
+    if (index < SERIES.length)
+        return SERIES[index];
+    const grays = count - SERIES.length;
+    const t = grays > 1 ? (index - SERIES.length) / (grays - 1) : 0;
+    const level = Math.round(0x6f + t * (0xd0 - 0x6f)).toString(16);
+    return `#${level}${level}${level}`;
 };
 
 const bar = { borderRadius: 4, borderSkipped: "start" as const, maxBarThickness: 28 };
@@ -77,8 +90,8 @@ export async function renderStats(container: HTMLElement, season: string, invoic
     const counts = activityCounts(invoices);
     const activitiesHeight = `${Math.max(12, activities.length * 2.2)}rem`;
     const tile = (value: string | number, label: string) => `<div class="tile"><div class="value">${value}</div><div class="label">${label}</div></div>`;
-    // Saisons comparées : la saison en cours et les deux précédentes au plus
-    const seasons = [{ season, dates: invoices.map((invoice) => invoice.date) }, ...history].slice(0, 3);
+    // Toutes les saisons, de la plus récente (en cours) à la plus ancienne
+    const seasons: SeasonMembers[] = [{ season, members: invoices }, ...history];
 
     container.innerHTML = `
       <div class="tiles">
@@ -161,7 +174,7 @@ export async function renderStats(container: HTMLElement, season: string, invoic
     }, true);
 
     if (seasons.length > 1) {
-        const curves = seasons.map(({ season: name, dates }) => ({ name, points: seasonCurve(name, dates) }));
+        const curves = seasons.map(({ season: name, members }) => ({ name, points: seasonCurve(name, members.map((member) => member.date)) }));
         const allPoints = curves.flatMap((curve) => curve.points);
         const firstDay = Math.min(0, ...allPoints.map((point) => point.day));
         const lastDay = Math.max(...allPoints.map((point) => point.day));
@@ -171,10 +184,14 @@ export async function renderStats(container: HTMLElement, season: string, invoic
         draw("chart-seasons", {
             type: "line",
             data: {
-                labels: allDays.map(seasonDay),
-                datasets: curves.map((curve, index) => line(`Saison ${curve.name}`,
-                    stepValues(curve.points, (point) => point.day, allDays).map((count, i) => (index === 0 && allDays[i] > currentLastDay ? null : count)),
-                    SERIES[index])),
+                labels: allDays.map(seasonDayLabel),
+                // Les plus anciennes d'abord : la saison en cours et la précédente sont tracées par-dessus
+                datasets: curves.map((curve, index) => ({
+                    ...line(`Saison ${curve.name}`,
+                        stepValues(curve.points, (point) => point.day, allDays).map((count, i) => (index === 0 && allDays[i] > currentLastDay ? null : count)),
+                        seasonColor(index, curves.length)),
+                    borderWidth: index < SERIES.length ? 2 : 1.5,
+                })).reverse(),
             },
             options: { scales: axes({ time: true }) },
         }, true);
@@ -218,3 +235,4 @@ export async function renderStats(container: HTMLElement, season: string, invoic
         options: { scales: axes() },
     });
 }
+

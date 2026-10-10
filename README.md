@@ -99,11 +99,15 @@ téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par
 - le suivi de l'envoi : envoyée, erreur, ou non distribuée (mail d'erreur reçu après l'envoi).
 
 **Statistiques** : chiffres clés (adhérents, montant encaissé, factures envoyées, à envoyer, en erreur),
-inscriptions au fil de la saison et comparaison avec les saisons précédentes, adhérents et recettes par
+inscriptions au fil de la saison et comparaison avec toutes les saisons précédentes, adhérents et recettes par
 activité (avec la liste des adhérents), envoi des factures par activité, tarifs, inscriptions par mois et nombre
-d'activités par adhérent. Les activités et les tarifs sont ceux de HelloAsso : un changement de nom ou une
-nouvelle activité y apparaît automatiquement. Pour la comparaison, le cron récupère aussi chaque jour les dates
-d'inscription des saisons archivées.
+d'activités par adhérent.
+
+Les activités et les tarifs sont ceux de HelloAsso : un changement de nom ou une nouvelle activité y apparaît
+automatiquement. Pour les comparaisons, le cron garde un résumé de chaque saison archivée (date, activités, tarif
+et montant de chaque adhésion, sans nom ni email) dans `acs-history/`. Une saison terminée ne changeant plus, ce
+résumé n'est récupéré sur HelloAsso qu'une fois, puis conservé d'une exécution à l'autre par le cache de GitHub
+Actions. La page n'appelle jamais HelloAsso : son secret reste dans GitHub Actions.
 
 Les graphes (Chart.js) et la génération des PDF (pdfmake) sont chargés depuis jsDelivr, avec une empreinte
 d'intégrité, plutôt qu'intégrés à la page chiffrée.

@@ -24,4 +24,11 @@ jobs:
         with:
           config-json: ${{ secrets.CONFIG_JSON }}
           signature: ${{ secrets.INVOICE_SIGNATURE }}
+      # Résumés des saisons archivées (sans données personnelles), récupérés une seule fois sur HelloAsso :
+      # le cache de la dernière exécution est restauré, puis enregistré à nouveau avec les saisons ajoutées
+      - uses: actions/cache@v4
+        with:
+          path: acs-history
+          key: acs-history-${{ github.run_id }}
+          restore-keys: acs-history-
       - run: ./cron.sh

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildInvoice } from "../src/InvoiceData.js";
+import { buildInvoice, summarize } from "../src/InvoiceData.js";
 
 // Adhésion telle que renvoyée par l'API HelloAsso (/forms/.../items?withDetails=true)
 const item = () => ({
@@ -73,5 +73,17 @@ describe("buildInvoice", () => {
     it("garde le téléphone de l'adhérent, s'il l'a donné", () => {
         expect(buildInvoice(item())!.phone).toBe("06 12 34 56 78");
         expect(buildInvoice({ ...item(), customFields: [{ name: "Société", answer: "X" }] })!.phone).toBe("");
+    });
+
+});
+
+describe("summarize", () => {
+    it("ne garde d'une adhésion que la date, les activités, le tarif et le montant : aucune donnée personnelle", () => {
+        expect(summarize(buildInvoice(item())!)).toEqual({
+            date: "2024-09-15",
+            activities: ["Football", "Tennis"],
+            formula: "Adhésion à l'ACS",
+            total: 35,
+        });
     });
 });

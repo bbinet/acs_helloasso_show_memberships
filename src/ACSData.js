@@ -1,7 +1,7 @@
 import { ApiV5Client as HelloAsso } from "helloasso";
 import cfg from "../config.json" with { type: "json" };
 import fs from "fs";
-import { buildInvoice, isBillable } from "./InvoiceData.js";
+import { buildInvoice, isBillable, summarize } from "./InvoiceData.js";
 
 function title(str) {
     return str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -65,7 +65,7 @@ export const MembersData = (items, season = seasons[0]) =>
 
 // Données de la page d'administration (acs-admin.json) : factures et paramètres d'envoi.
 // Contient l'adresse et le jeton du script d'envoi : ne doit être intégré qu'à la page admin.
-// history : dates d'inscription des saisons archivées, [{ season, dates }], pour les comparer à la saison en cours
+// history : adhésions résumées des saisons archivées, [{ season, members }], pour les comparer à la saison en cours
 export const AdminData = (items, season = seasons[0], history = []) =>
 {
     const invoicing = cfg.conf.invoicing ?? {};
@@ -86,7 +86,7 @@ export const AdminData = (items, season = seasons[0], history = []) =>
     });
 }
 
-// Dates d'inscription d'une saison (adhésions non remboursées)
-export const SeasonDates = (items) => items.map(buildInvoice).filter(Boolean).map((invoice) => invoice.date);
+// Adhésions d'une saison (non remboursées), résumées sans données personnelles (voir summarize)
+export const SeasonSummary = (items) => items.map(buildInvoice).filter(Boolean).map(summarize);
 
 export const GetData = async (season = seasons[0]) => MembersData(await GetItems(season), season);

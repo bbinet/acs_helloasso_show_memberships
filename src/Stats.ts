@@ -109,6 +109,15 @@ const DAY = 24 * 60 * 60 * 1000;
 // Courbe cumulée d'une saison (« 2026-2027 »), en jours depuis le 1er juillet de sa première année :
 // les saisons peuvent ainsi être superposées sur un même graphe
 export function seasonCurve(season: string, dates: string[]) {
-    const start = Date.UTC(Number(season.slice(0, 4)), 6, 1);
-    return cumulative(dates).map(({ date, count }) => ({ day: Math.round((Date.parse(`${date}T00:00:00Z`) - start) / DAY), count }));
+    return cumulative(dates).map(({ date, count }) => ({ day: seasonDay(season, date), count }));
 }
+
+// Adhésions d'une saison, résumées (voir summarize) : la saison en cours peut passer ses factures telles quelles
+export interface SeasonMembers {
+    season: string;
+    members: { date: string; activities: string[]; total: number }[];
+}
+
+// Jour de saison d'une date (« AAAA-MM-JJ »), compté depuis le 1er juillet de la première année de la saison
+export const seasonDay = (season: string, date: string) =>
+    Math.round((Date.parse(`${date}T00:00:00Z`) - Date.UTC(Number(season.slice(0, 4)), 6, 1)) / DAY);
