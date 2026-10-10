@@ -43,20 +43,16 @@ export interface ActivityGroup {
     name: string;
     count: number;
     revenue: number; // recettes des options de cette activité
-    sent: number;
-    todo: number;
-    problems: number;
     members: Invoice[];
 }
 
 // Adhérents par activité (un adhérent compte dans chacune de ses activités), sans activité en dernier
-export function byActivity(invoices: Invoice[], statuses: Statuses): ActivityGroup[] {
+export function byActivity(invoices: Invoice[]): ActivityGroup[] {
     return groupBy(invoices, (invoice) => (invoice.activities.length ? invoice.activities : [NO_ACTIVITY]))
         .map(([name, members]) => ({
             name,
             count: members.length,
             revenue: sum(members.flatMap((m) => m.lines.filter((line) => line.label === name).map((line) => line.amount))),
-            ...sendingCounts(members, statuses),
             members,
         }))
         .sort((a, b) => Number(a.name === NO_ACTIVITY) - Number(b.name === NO_ACTIVITY) || b.count - a.count || a.name.localeCompare(b.name, "fr"));

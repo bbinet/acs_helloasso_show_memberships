@@ -14,9 +14,8 @@ const CHARTJS = {
 };
 
 // Couleurs : une série = bleu ; saison en cours et saison précédente = bleu et orange (palette validée pour les
-// daltoniens), saisons plus anciennes en gris ; statuts d'envoi = vert (envoyée), gris (à envoyer), rouge (en erreur)
+// daltoniens), saisons plus anciennes en gris
 const SERIES = ["#2a78d6", "#eb6834"];
-const STATUS = { sent: "#0ca30c", todo: "#c3c2b7", problems: "#d03b3b" };
 const MUTED = "#898781";
 const GRID = "#e1e0d9";
 const MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
@@ -32,9 +31,9 @@ const seasonDayLabel = (day: number) => shortDate(new Date(Date.UTC(2001, 6, 1) 
 let charts: ChartJs[] = [];
 
 // Axes : valeurs à partir de 0 avec une grille discrète ; catégories sans grille (dates espacées pour les courbes)
-const axes = (options: { stacked?: boolean; horizontal?: boolean; time?: boolean } = {}) => {
-    const value = { beginAtZero: true, stacked: options.stacked, ticks: { color: MUTED, precision: 0 }, grid: { color: GRID }, border: { display: false } };
-    const category = { stacked: options.stacked, ticks: { color: MUTED, ...(options.time && { maxTicksLimit: 12, maxRotation: 0 }) }, grid: { display: false } };
+const axes = (options: { horizontal?: boolean; time?: boolean } = {}) => {
+    const value = { beginAtZero: true, ticks: { color: MUTED, precision: 0 }, grid: { color: GRID }, border: { display: false } };
+    const category = { ticks: { color: MUTED, ...(options.time && { maxTicksLimit: 12, maxRotation: 0 }) }, grid: { display: false } };
     return options.horizontal ? { x: value, y: category } : { x: category, y: value };
 };
 
@@ -74,9 +73,6 @@ const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/P
 const bar = { borderRadius: 4, borderSkipped: "start" as const, maxBarThickness: 28 };
 const line = (label: string, data: (number | null)[], color: string, stepped = false) =>
     ({ label, data, borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, stepped });
-// Segments de barres empilées, séparés par un liseré blanc
-const stackedBar = (label: string, data: number[], color: string) =>
-    ({ label, data, backgroundColor: color, borderColor: "#fff", borderWidth: { right: 2 } as any, ...bar, borderRadius: 0 });
 
 // Valeur d'une courbe cumulée (points triés) à chaque abscisse demandée (triées), en un seul parcours
 const stepValues = <T>(points: (T & { count: number })[], key: (point: T) => string | number, xs: (string | number)[]) => {
@@ -92,7 +88,7 @@ export async function renderStats(container: HTMLElement, season: string, invoic
     charts.forEach((chart) => chart.destroy());
     charts = [];
     const figures = keyFigures(invoices, statuses);
-    const activities = byActivity(invoices, statuses);
+    const activities = byActivity(invoices);
     const formulas = byFormula(invoices);
     const months = byMonth(invoices);
     const counts = activityCounts(invoices);
@@ -156,11 +152,6 @@ export async function renderStats(container: HTMLElement, season: string, invoic
             </tr>`).join("")}
           </tbody>
         </table>
-      </div>
-
-      <div class="stats-block">
-        <h3>Envoi des factures par activité</h3>
-        <div class="chart" style="height:${activitiesHeight}"><canvas id="chart-status" aria-label="Statut des factures par activité"></canvas></div>
       </div>
 
       <div class="stats-block">
@@ -232,19 +223,6 @@ export async function renderStats(container: HTMLElement, season: string, invoic
         data: { labels: names, datasets: [{ label: "Adhérents", data: activities.map((group) => group.count), backgroundColor: SERIES[0], ...bar }] },
         options: { indexAxis: "y", scales: axes({ horizontal: true }), interaction: { mode: "nearest", axis: "y", intersect: false } },
     });
-
-    draw("chart-status", {
-        type: "bar",
-        data: {
-            labels: names,
-            datasets: [
-                stackedBar("Envoyées", activities.map((group) => group.sent), STATUS.sent),
-                stackedBar("À envoyer", activities.map((group) => group.todo), STATUS.todo),
-                stackedBar("En erreur", activities.map((group) => group.problems), STATUS.problems),
-            ],
-        },
-        options: { indexAxis: "y", scales: axes({ stacked: true, horizontal: true }), interaction: { mode: "index", axis: "y", intersect: false } },
-    }, true);
 
     draw("chart-months", {
         type: "bar",

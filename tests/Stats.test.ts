@@ -20,18 +20,13 @@ describe("keyFigures", () => {
 
 describe("byActivity", () => {
     it("regroupe les adhérents par activité, de la plus suivie à la moins suivie, avec les recettes de l'activité", () => {
-        const groups = byActivity(invoices, statuses);
+        const groups = byActivity(invoices);
         expect(groups.map((g) => [g.name, g.count, g.revenue])).toEqual([
             ["Tennis", 2, 25.5],
             ["Football", 1, 15],
             [NO_ACTIVITY, 1, 0],
         ]);
         expect(groups[0].members.map((m) => m.id)).toEqual([1, 2]);
-    });
-
-    it("compte les factures envoyées, à envoyer et en erreur de chaque activité", () => {
-        const tennis = byActivity(invoices, statuses)[0];
-        expect([tennis.sent, tennis.todo, tennis.problems]).toEqual([1, 0, 1]);
     });
 });
 
