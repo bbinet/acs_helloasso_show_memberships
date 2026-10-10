@@ -270,16 +270,18 @@ export class FreeDatas2HTML
                 this._datas.sort( (a, b) => compare( {order: fieldOrder} )(a[field], b[field]));
         }
 
+        // Sauf si l'utilisateur vient de choisir la page à afficher, on revient à la première page
+        // Car dans les autres cas le nombre d'enregistrements peut avoir évolué et donc le nombre de pages proposées.
+        // Avant de calculer la première donnée affichée : sinon, une recherche lancée depuis la page 2 partirait
+        // encore de la 2e page de résultats.
+        if(this.pagination !== undefined && this.pagination.pages !== undefined && this.pagination.pages.selectedValue !== undefined && !paginationSelected)
+             this.pagination.pages.selectedValue=1;
+
         // Dois-je prendre en compte une pagination ?
         let firstData=0;
         if (this.pagination !== undefined && this.pagination.selectedValue !== undefined &&  this.pagination.pages !== undefined && this.pagination.pages.selectedValue !== undefined)
             firstData=this.pagination.selectedValue*(this.pagination.pages.selectedValue-1);
         let maxData=(this.pagination !== undefined && this.pagination.selectedValue !== undefined) ? this.pagination.selectedValue : this._datas.length;
-
-        // Sauf si l'utilisateur vient de choisir la page à afficher, on revient à la première page
-        // Car dans les autres cas le nombre d'enregistrements peut avoir évolué et donc le nombre de pages proposées :
-        if(this.pagination !== undefined && this.pagination.pages !== undefined && this.pagination.pages.selectedValue !== undefined && !paginationSelected)
-             this.pagination.pages.selectedValue=1; // ajouter un test unitaire ?
         
         // Création du tableau des données à afficher :
         let datas2Display=[];
