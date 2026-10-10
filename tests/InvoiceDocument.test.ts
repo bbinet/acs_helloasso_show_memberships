@@ -42,9 +42,10 @@ describe("invoiceDocument", () => {
 
     it("détaille les lignes en euros, le total à payer et la date de paiement", () => {
         const text = content(invoiceDocument(invoice, { issuedOn: new Date("2026-10-09T12:00:00Z"), issuer }));
-        expect(text).toMatch(/Adhésion à l'ACS\n20,00 €\n1\n20,00 €/);
-        expect(text).toMatch(/Football\n15,50 €\n1\n15,50 €/);
-        expect(text).toMatch(/Total à payer :\n35,50 €/);
+        // Espace insécable avant « € » : le symbole ne passe jamais seul à la ligne
+        expect(text).toMatch(/Adhésion à l'ACS\n20,00\u00a0€\n1\n20,00\u00a0€/);
+        expect(text).toMatch(/Football\n15,50\u00a0€\n1\n15,50\u00a0€/);
+        expect(text).toMatch(/Total à payer :\n35,50\u00a0€/);
         expect(text).toContain("Payé le 15/09/2024.");
     });
 

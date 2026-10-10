@@ -6,6 +6,7 @@ import { invoiceFileName, invoicePdf, loadPdfMake } from "./InvoicePdf";
 import { InvoiceService, type InvoiceStatus } from "./InvoiceService";
 import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
+import { escape, euros, frenchDate } from "./format";
 import adminData from "../acs-admin.json"
 
 const { season, invoices, issuer, signature, service: serviceConfig } = adminData as {
@@ -21,9 +22,6 @@ let statuses: Record<string, InvoiceStatus> = {};
 let sending = false;
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const escape = (text: unknown) => String(text ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const euros = (amount: number) => `${amount.toFixed(2).replace(".", ",")} €`;
-const frenchDate = (date: string) => new Date(date).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
 
 // « À envoyer » : jamais envoyée. Les factures en erreur demandent d'abord une correction (adresse sur HelloAsso).
 const isTodo = (invoice: Invoice) => !statuses[invoice.id];

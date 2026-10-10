@@ -2,6 +2,7 @@
 // sous forme de document pdfmake (transformé en PDF dans le navigateur par InvoicePdf.ts).
 import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
 import type { Invoice } from "./InvoiceData.js";
+import { euros, frenchDate } from "./format";
 
 export interface Issuer { name: string; title: string; email: string }
 
@@ -20,12 +21,6 @@ const ADDRESS_FROM = [
     "N° agrément : W732001354",
     "Email : acs.technolac@gmail.com",
 ];
-
-// 15.5 => "15,50 €"
-const euros = (amount: number) => `${amount.toFixed(2).replace(".", ",")} €`;
-
-// 09/10/2026 (heure de Paris)
-const frenchDate = (date: Date) => date.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
 
 // Le logo, très atténué
 const watermark = (svg: string) => svg.replace(/(<svg[^>]*>)/, '$1<g opacity="0.05">').replace(/<\/svg>\s*$/, "</g></svg>");
@@ -64,7 +59,7 @@ export function invoiceDocument(invoice: Invoice, options: InvoiceOptions): TDoc
                 ],
             },
         },
-        { text: `Payé le ${invoice.date.split("-").reverse().join("/")}.` },
+        { text: `Payé le ${frenchDate(invoice.date)}.` },
         {
             stack: [
                 { text: [`Etabli par ${options.issuer.name}`, options.issuer.title].join("\n") },
