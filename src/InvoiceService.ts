@@ -8,6 +8,12 @@ export interface InvoiceStatus {
     detail: string;
 }
 
+// Pour les filtres, les statistiques et l'affichage : à envoyer (jamais envoyée), envoyée,
+// ou en erreur (refusée par Gmail ou non distribuée : l'adresse est à corriger sur HelloAsso)
+export type StatusCategory = "todo" | "sent" | "problem";
+export const statusCategory = (status?: InvoiceStatus): StatusCategory =>
+    !status ? "todo" : status.status === "envoyée" ? "sent" : "problem";
+
 export interface SendResult { ok: boolean; error?: string; quota?: boolean; status?: InvoiceStatus }
 
 export class InvoiceService {

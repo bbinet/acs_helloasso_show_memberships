@@ -3,10 +3,10 @@ import 'papercss'
 import './style.css'
 import { showDates } from "./Dates";
 import { invoiceFileName, invoicePdf, loadPdfMake } from "./InvoicePdf";
-import { InvoiceService, type InvoiceStatus } from "./InvoiceService";
+import { InvoiceService, statusCategory, type InvoiceStatus } from "./InvoiceService";
 import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
-import { escape, euros, frenchDate } from "./format";
+import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
 
 const { season, invoices, issuer, signature, service: serviceConfig } = adminData as {
@@ -20,42 +20,49 @@ const settings = { issuer, signature };
 const service = serviceConfig ? new InvoiceService(serviceConfig.url, serviceConfig.token, season) : null;
 let statuses: Record<string, InvoiceStatus> = {};
 let sending = false;
+// Factures cochées (n°), conservées d'une page ou d'un filtre à l'autre
+const selected = new Set<number>();
+let page = 1;
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 // « À envoyer » : jamais envoyée. Les factures en erreur demandent d'abord une correction (adresse sur HelloAsso).
-const isTodo = (invoice: Invoice) => !statuses[invoice.id];
-const isProblem = (invoice: Invoice) => ["erreur", "non distribuée"].includes(statuses[invoice.id]?.status);
+const isTodo = (invoice: Invoice) => statusCategory(statuses[invoice.id]) === "todo";
 
 const statusCell = (invoice: Invoice) => {
     const status = statuses[invoice.id];
     if (!status)
         return service ? `<span class="badge secondary">à envoyer</span>` : "";
-    const badge = status.status === "envoyée" ? "success" : "danger";
+    const badge = statusCategory(status) === "sent" ? "success" : "danger";
     const detail = status.detail ? `<br/><small>${escape(status.detail)}</small>` : "";
     return `<span class="badge ${badge}">${escape(status.status)}</span> <small>le ${frenchDate(status.date)}</small>${detail}`;
 };
 
-const visibleInvoices = () => {
+const filteredInvoices = () => {
     const search = element<HTMLInputElement>("search").value.trim().toLowerCase();
-    const filter = element<HTMLSelectElement>("filter").value;
-    return invoices.filter((invoice) => {
-        const text = `${invoice.id} ${invoice.firstName} ${invoice.lastName} ${invoice.company} ${invoice.email}`.toLowerCase();
-        if (search && !text.includes(search))
-            return false;
-        if (filter === "todo")
-            return isTodo(invoice);
-        if (filter === "problem")
-            return isProblem(invoice);
-        if (filter)
-            return statuses[invoice.id]?.status === filter;
-        return true;
-    });
+    const status = element<HTMLSelectElement>("filter").value;
+    return invoices.filter((invoice) =>
+        (!search || `${invoice.id} ${invoice.firstName} ${invoice.lastName} ${invoice.company} ${invoice.email}`.toLowerCase().includes(search))
+        && (!status || statusCategory(statuses[invoice.id]) === status));
+};
+
+// Taille de page : 0 = tout afficher
+const pageSize = () => Number(element<HTMLSelectElement>("pageSize").value);
+
+const renderPages = (pageCount: number) => {
+    element("pages").innerHTML = pageCount <= 1 ? "" : Array.from({ length: pageCount }, (_, i) =>
+        `<button class="btn-small${i + 1 === page ? " btn-secondary" : ""}" data-page="${i + 1}">${i + 1}</button>`).join("");
 };
 
 const render = () => {
-    const rows = visibleInvoices().map((invoice) => `
+    const filtered = filteredInvoices();
+    const size = pageSize() || filtered.length || 1;
+    const pageCount = Math.max(1, Math.ceil(filtered.length / size));
+    page = Math.min(page, pageCount);
+    const shown = filtered.slice((page - 1) * size, page * size);
+    const rows = shown.map((invoice) => `
         <tr>
+          <td class="select"><input type="checkbox" data-select="${invoice.id}" ${selected.has(invoice.id) ? "checked" : ""}/></td>
           <td>${invoice.id}</td>
           <td>${frenchDate(invoice.date)}</td>
           <td>${escape(invoice.firstName)} ${escape(invoice.lastName)}<br/><small>${escape(invoice.company)}</small></td>
@@ -68,16 +75,28 @@ const render = () => {
             ${service ? `<button class="btn-small btn-secondary" data-action="send" data-id="${invoice.id}" ${sending ? "disabled" : ""}>${statuses[invoice.id] ? "Renvoyer" : "Envoyer"}</button>` : ""}
           </td>
         </tr>`);
+    const pageSelected = shown.length > 0 && shown.every((invoice) => selected.has(invoice.id));
     element("invoices").innerHTML = `
         <table class="table-hover">
-          <thead><tr><th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email</th><th>Montant</th><th>Envoi</th><th></th></tr></thead>
+          <thead><tr>
+            <th class="select"><input type="checkbox" data-select="page" title="Sélectionner les factures de la page" ${pageSelected ? "checked" : ""}/></th>
+            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email</th><th>Montant</th><th>Envoi</th><th>Facture</th>
+          </tr></thead>
           <tbody>${rows.join("")}</tbody>
         </table>`;
-    element("count").textContent = String(rows.length);
+    const range = filtered.length > shown.length ? ` (${(page - 1) * size + 1} à ${(page - 1) * size + shown.length} affichées)` : "";
+    element("count").textContent = `${filtered.length}${range}`;
+    renderPages(pageCount);
+
     const todo = invoices.filter(isTodo).length;
     const sendAll = element<HTMLButtonElement>("sendAll");
     sendAll.textContent = `Envoyer les factures à envoyer (${todo})`;
     sendAll.disabled = !service || sending || todo === 0;
+    const sendSelected = element<HTMLButtonElement>("sendSelected");
+    sendSelected.textContent = `Envoyer la sélection (${selected.size})`;
+    sendSelected.disabled = !service || sending || selected.size === 0;
+    element<HTMLButtonElement>("selectAll").textContent = `Tout sélectionner (${filtered.length})`;
+    element<HTMLButtonElement>("selectNone").disabled = selected.size === 0;
 };
 
 const findInvoice = (id: string | undefined) => invoices.find((invoice) => String(invoice.id) === id);
@@ -135,26 +154,73 @@ element("invoices").addEventListener("click", async (event) => {
     }
 });
 
-element("sendAll").addEventListener("click", async () => {
-    const todo = invoices.filter(isTodo);
-    if (!confirm(`Envoyer ${todo.length} facture(s) par email ?`))
-        return;
+// Envoie une liste de factures, une par une ; s'arrête si le quota quotidien de Gmail est atteint
+const sendBatch = async (batch: Invoice[]) => {
     const progress = element("progress");
     await withSending(async () => {
-        for (const [index, invoice] of todo.entries()) {
-            progress.textContent = `Envoi ${index + 1}/${todo.length} : facture n°${invoice.id}...`;
-            if (!(await send(invoice, false))) {
+        for (const [index, invoice] of batch.entries()) {
+            progress.textContent = `Envoi ${index + 1}/${batch.length} : facture n°${invoice.id}...`;
+            if (!(await send(invoice, Boolean(statuses[invoice.id])))) {
                 progress.textContent = `Quota d'envoi quotidien de Gmail atteint après ${index} facture(s) : reprendre l'envoi demain.`;
                 return;
             }
+            if (statusCategory(statuses[invoice.id]) === "sent")
+                selected.delete(invoice.id);
             render();
         }
-        progress.textContent = `${todo.length} facture(s) traitée(s).`;
+        progress.textContent = `${batch.length} facture(s) traitée(s).`;
     });
+};
+
+element("sendAll").addEventListener("click", async () => {
+    const todo = invoices.filter(isTodo);
+    if (confirm(`Envoyer ${todo.length} facture(s) par email ?`))
+        await sendBatch(todo);
 });
 
-element("search").addEventListener("input", render);
-element("filter").addEventListener("change", render);
+element("sendSelected").addEventListener("click", async () => {
+    const batch = invoices.filter((invoice) => selected.has(invoice.id));
+    const resent = batch.filter((invoice) => statuses[invoice.id]).length;
+    const question = `Envoyer ${batch.length} facture(s) par email ?`
+        + (resent ? `\n\n${resent} d'entre elles ont déjà été envoyées et seront renvoyées.` : "");
+    if (confirm(question))
+        await sendBatch(batch);
+});
+
+element("selectAll").addEventListener("click", () => {
+    filteredInvoices().forEach((invoice) => selected.add(invoice.id));
+    render();
+});
+
+element("selectNone").addEventListener("click", () => {
+    selected.clear();
+    render();
+});
+
+// Cases à cocher : une facture, ou toutes celles de la page
+element("invoices").addEventListener("change", (event) => {
+    const box = event.target as HTMLInputElement;
+    if (!box.dataset.select)
+        return;
+    const ids = box.dataset.select === "page"
+        ? Array.from(element("invoices").querySelectorAll<HTMLInputElement>("tbody input[data-select]")).map((b) => Number(b.dataset.select))
+        : [Number(box.dataset.select)];
+    ids.forEach((id) => (box.checked ? selected.add(id) : selected.delete(id)));
+    render();
+});
+
+element("pages").addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-page]");
+    if (!button)
+        return;
+    page = Number(button.dataset.page);
+    render();
+    element("count").scrollIntoView({ behavior: "smooth" });
+});
+
+// Nouvelle recherche, nouveau filtre ou nouvelle taille de page : retour à la première page
+for (const [id, type] of [["search", "input"], ["filter", "change"], ["pageSize", "change"]])
+    element(id).addEventListener(type, () => { page = 1; render(); });
 
 const initialise = async () => {
     element("season").textContent = season;
@@ -162,20 +228,21 @@ const initialise = async () => {
     render();
     // Chargé en avance, pour que le premier aperçu soit rapide ; une erreur sera signalée à l'usage
     loadPdfMake().catch(console.error);
+    // État du registre des envois (feuille Google lue par le script) : en haut à gauche
     const banner = element("service");
     if (!service) {
-        banner.className = "alert alert-warning";
-        banner.textContent = "Service d'envoi non configuré : aperçu et téléchargement des factures seulement.";
+        banner.className = "warning";
+        banner.textContent = "Envoi non configuré : aperçu et téléchargement seulement";
         return;
     }
     try {
         statuses = await service.statuses();
-        banner.className = "alert alert-success";
-        banner.textContent = "Statuts d'envoi à jour.";
+        banner.className = "ok";
+        banner.textContent = `Registre des envois lu à ${parisTime(new Date())}`;
     } catch (e) {
         console.error(e);
-        banner.className = "alert alert-danger";
-        banner.textContent = `Statuts d'envoi indisponibles : ${(e as Error).message}`;
+        banner.className = "error";
+        banner.textContent = `Registre des envois indisponible : ${(e as Error).message}`;
     }
     render();
 };

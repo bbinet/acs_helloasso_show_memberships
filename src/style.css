@@ -19,3 +19,12 @@ table caption { font-weight: bolder; }
 /* Dates des données et de la dernière vérification : en haut à droite, hors du flux */
 body { position:relative; }
 #dates { position:absolute; top:0.3rem; right:1.5rem; font-size:0.8rem; color:#888; white-space:nowrap; }
+/* Page admin : état du registre des envois, en haut à gauche, hors du flux */
+#service { position:absolute; top:0.3rem; left:1.5rem; font-size:0.8rem; color:#888; white-space:nowrap; }
+#service.ok::before { content:"● "; color:#86a361; }
+#service.warning::before { content:"● "; color:#ddcd45; }
+#service.error { color:#a7342d; }
+#service.error::before { content:"● "; }
+input.search { width:100%; }
+#invoices td.select, #invoices th.select { width:2rem; }
+#pages button { margin:0.2rem; }

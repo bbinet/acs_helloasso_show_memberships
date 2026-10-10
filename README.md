@@ -81,12 +81,13 @@ publication :
 # Page d'administration : factures
 
 La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, différent de celui de la page des
-adhérents, qui ne change pas. Elle liste les factures de la saison en cours (une par adhésion non remboursée)
-et permet de :
+adhérents, qui ne change pas. Elle liste les factures de la saison en cours (une par adhésion non remboursée),
+100 par page, et permet de :
 
+- chercher une facture (nom, entreprise, email, n°) et filtrer sur le statut d'envoi ;
 - voir et télécharger chaque facture en PDF, générée dans le navigateur (modèle repris de
   `acs_helloasso_invoicing`) ;
-- envoyer une facture par email, ou toutes les factures pas encore envoyées ;
+- envoyer une facture par email, les factures cochées, ou toutes celles pas encore envoyées ;
 - suivre l'envoi : envoyée, erreur, ou non distribuée (mail d'erreur reçu après l'envoi).
 
 L'envoi passe par un script Google Apps Script du compte acs.tresorier@gmail.com, qui tient aussi le registre

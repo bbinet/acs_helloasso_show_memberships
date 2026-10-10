@@ -6,32 +6,45 @@
     <title>Factures ACS</title>
   </head>
   <body class="paper container-lg">
+    <div id="service">Registre des envois : chargement...</div>
     <div id="dates"></div>
     <h2>Factures ACS - saison <span id="season"></span></h2>
     <p><a href="../">Liste des adhérents</a></p>
 
-    <div id="service" class="alert alert-secondary">Chargement des statuts d'envoi...</div>
-
     <div class="row flex-middle">
-      <div class="sm-12 md-4 col">
-        <input id="search" type="search" placeholder="Rechercher (nom, entreprise, email, n°)..." />
+      <div class="sm-12 md-6 col">
+        <input id="search" type="search" class="search" placeholder="Rechercher (nom, entreprise, email, n°)..." />
       </div>
-      <div class="sm-12 md-3 col">
+      <div class="sm-6 md-3 col">
         <select id="filter">
           <option value="">Toutes les factures</option>
           <option value="todo">À envoyer</option>
-          <option value="envoyée">Envoyées</option>
+          <option value="sent">Envoyées</option>
           <option value="problem">En erreur</option>
         </select>
       </div>
-      <div class="sm-12 md-5 col">
+      <div class="sm-6 md-3 col">
+        <select id="pageSize">
+          <option value="50">50 par page</option>
+          <option value="100" selected>100 par page</option>
+          <option value="200">200 par page</option>
+          <option value="0">Toutes</option>
+        </select>
+      </div>
+    </div>
+    <div class="row flex-middle">
+      <div class="col">
+        <button id="sendSelected" class="btn-secondary" disabled>Envoyer la sélection</button>
         <button id="sendAll" class="btn-primary" disabled>Envoyer les factures à envoyer</button>
+        <button id="selectAll">Tout sélectionner</button>
+        <button id="selectNone" disabled>Tout désélectionner</button>
       </div>
     </div>
     <p id="progress"></p>
 
     <h3>Nombre de factures : <span id="count"></span></h3>
     <div id="invoices"><p>...</p></div>
+    <div id="pages" class="row flex-center"></div>
 
     <script type="module" src="/src/admin-main.ts"></script>
   </body>
