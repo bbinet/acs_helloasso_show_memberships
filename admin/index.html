@@ -49,13 +49,14 @@
           <select id="formula" class="wide"><option value="">Tous les tarifs</option></select>
         </div>
       </div>
-      <div class="row flex-middle">
-        <div class="col">
-          <button id="sendSelected" class="btn-secondary" disabled>Envoyer par email les factures sélectionnées</button>
+      <!-- À gauche : sélection ; à droite : actions sur la sélection ou la liste filtrée -->
+      <div class="actions">
+        <div class="action-block">
           <button id="selectAll">Tout sélectionner</button>
           <button id="selectNone" disabled>Tout désélectionner</button>
         </div>
-        <div class="col">
+        <div class="action-block">
+          <button id="sendSelected" class="btn-secondary" disabled>Envoyer par email les factures sélectionnées</button>
           <button id="exportCsv">Exporter en CSV</button>
           <button id="copyEmails">Copier les emails</button>
         </div>

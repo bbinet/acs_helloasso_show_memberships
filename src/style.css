@@ -32,6 +32,10 @@ input.search { width:100%; }
 .pagination button { margin:0.2rem; }
 /* Factures et exports : à gauche la recherche et la période d'inscription, à droite les filtres */
 .filters { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); gap:0.6rem 2rem; margin:1rem 0; }
+/* En dessous : les boutons de sélection à gauche, les actions (envoi, exports) à droite */
+.actions { display:flex; flex-wrap:wrap; justify-content:space-between; gap:0.6rem 2rem; margin:1rem 0; }
+.action-block { display:flex; flex-wrap:wrap; gap:0.5rem; }
+.action-block button { margin:0; }
 /* Deux champs par ligne, ou un seul sur les petits écrans */
 .filter-block { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap:0.6rem 1rem; align-content:start; }
 .filter-block > * { min-width:0; }
