@@ -184,3 +184,16 @@ empreinte de ce qui est publié est gardée dans `gh-pages/.acs.sha256` et
 
 La mise en ligne du site après chaque publication sur `gh-pages` est ensuite
 faite par le workflow `pages-build-deployment` de GitHub Pages.
+
+# Évolutions envisagées
+
+- **Charger les saisons archivées seulement quand on en a besoin** : leurs résumés (environ 65 Ko par saison)
+  sont aujourd'hui intégrés à la page admin, et alourdissent chacun de ses chargements. Ils pourraient être
+  publiés dans un fichier à part de `admin/`, chiffré à chaque construction (AES) avec une clé aléatoire placée
+  dans la page admin, elle-même chiffrée par le mot de passe admin : seul le bureau pourrait le lire, et il ne
+  serait téléchargé qu'à l'ouverture de l'onglet Statistiques. À tester : le fichier chiffré se déchiffre avec
+  la clé, et pas avec une autre.
+- **Planification du cron** : décaler l'heure de lancement de l'heure pile (souvent retardée par GitHub), et
+  éviter que GitHub désactive les workflows planifiés après 60 jours sans activité sur le dépôt.
+- **Factures** : télécharger toutes les factures sélectionnées en une seule archive ZIP.
+- **Page admin sur téléphone** : adapter la mise en page des onglets et des tableaux aux petits écrans.
