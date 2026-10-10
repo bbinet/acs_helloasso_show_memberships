@@ -95,8 +95,9 @@ la liste, comme dans l'onglet Adhérents), avec :
 - l'export CSV de la liste filtrée (pour Excel) et la copie des emails de la liste filtrée, au format
   `"Prénom Nom" <email>`, à coller dans un mail ;
 - pour chaque adhésion, la facture en PDF, générée dans le navigateur (modèle repris de
-  `acs_helloasso_invoicing`), à voir, télécharger ou envoyer par email ; l'envoi groupé des factures cochées
-  ou de toutes celles pas encore envoyées ;
+  `acs_helloasso_invoicing`), à voir, télécharger ou envoyer par email ; l'envoi groupé des factures
+  sélectionnées (par exemple toutes celles du filtre « À envoyer »), avec un avertissement pour celles déjà
+  envoyées ;
 - le suivi de l'envoi : envoyée, erreur, ou non distribuée (mail d'erreur reçu après l'envoi).
 
 **Statistiques**, en trois sous-onglets :

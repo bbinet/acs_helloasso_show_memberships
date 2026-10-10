@@ -34,17 +34,25 @@ let page = 1;
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
-// « À envoyer » : jamais envoyée. Les factures en erreur demandent d'abord une correction (adresse sur HelloAsso).
-const isTodo = (invoice: Invoice) => statusCategory(statuses[invoice.id]) === "todo";
-
 const statusCell = (invoice: Invoice) => {
     const status = statuses[invoice.id];
     if (!status)
         return service ? `<span class="badge secondary">à envoyer</span>` : "";
     const badge = statusCategory(status) === "sent" ? "success" : "danger";
     const detail = status.detail ? `<br/><small>${escape(status.detail)}</small>` : "";
-    return `<span class="badge ${badge}">${escape(status.status)}</span> <small>le ${frenchDate(status.date)}</small>${detail}`;
+    return `<span class="badge ${badge}">${escape(status.status)}</span><br/><small>le ${frenchDate(status.date)}</small>${detail}`;
 };
+
+// Icônes des boutons de chaque facture (traits de 24 × 24, couleur du texte)
+const ICON_PATHS = {
+    preview: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    download: '<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>',
+    send: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+};
+const icon = (name: keyof typeof ICON_PATHS) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
+// Bouton d'icône ; « highlighted » (en bleu) pour l'envoi d'une facture jamais envoyée
+const iconButton = (action: keyof typeof ICON_PATHS, id: number, label: string, { highlighted = false, disabled = false } = {}) =>
+    `<button class="btn-small icon-button${highlighted ? " btn-secondary" : ""}" data-action="${action}" data-id="${id}" title="${escape(label)}" aria-label="${escape(label)}" ${disabled ? "disabled" : ""}>${icon(action)}</button>`;
 
 const value = (id: string) => element<HTMLInputElement | HTMLSelectElement>(id).value;
 const criteria = (): FilterCriteria => ({
@@ -81,10 +89,12 @@ const render = () => {
           <td class="activities">${invoice.activities.map(escape).join("<br/>")}</td>
           <td>${euros(invoice.total)}</td>
           <td>${statusCell(invoice)}</td>
-          <td>
-            <button class="btn-small" data-action="preview" data-id="${invoice.id}">Aperçu</button>
-            <button class="btn-small" data-action="download" data-id="${invoice.id}">Télécharger</button>
-            ${service ? `<button class="btn-small btn-secondary" data-action="send" data-id="${invoice.id}" ${sending ? "disabled" : ""}>${statuses[invoice.id] ? "Renvoyer" : "Envoyer"}</button>` : ""}
+          <td class="invoice-actions">
+            ${iconButton("preview", invoice.id, `Aperçu de la facture n°${invoice.id}`)}
+            ${iconButton("download", invoice.id, `Télécharger la facture n°${invoice.id} (PDF)`)}
+            ${service ? iconButton("send", invoice.id, statuses[invoice.id]
+                ? `Renvoyer la facture n°${invoice.id} par email à ${invoice.email} (déjà envoyée)`
+                : `Envoyer la facture n°${invoice.id} par email à ${invoice.email}`, { highlighted: !statuses[invoice.id], disabled: sending }) : ""}
           </td>
         </tr>`);
     const pageSelected = shown.length > 0 && shown.every((invoice) => selected.has(invoice.id));
@@ -92,7 +102,7 @@ const render = () => {
         <table class="table-hover">
           <thead><tr>
             <th class="select"><input type="checkbox" data-select="page" title="Sélectionner les factures de la page" ${pageSelected ? "checked" : ""}/></th>
-            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email / téléphone</th><th>Activités</th><th>Montant</th><th>Envoi</th><th>Facture</th>
+            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email / téléphone</th><th>Activités</th><th>Montant</th><th>Envoi par email</th><th>Facture</th>
           </tr></thead>
           <tbody>${rows.join("")}</tbody>
         </table>`;
@@ -100,12 +110,8 @@ const render = () => {
     element("count").textContent = `${filtered.length}${range}`;
     renderPages(pageCount);
 
-    const todo = invoices.filter(isTodo).length;
-    const sendAll = element<HTMLButtonElement>("sendAll");
-    sendAll.textContent = `Envoyer les factures à envoyer (${todo})`;
-    sendAll.disabled = !service || sending || todo === 0;
     const sendSelected = element<HTMLButtonElement>("sendSelected");
-    sendSelected.textContent = `Envoyer la sélection (${selected.size})`;
+    sendSelected.textContent = `Envoyer par email les factures sélectionnées (${selected.size})`;
     sendSelected.disabled = !service || sending || selected.size === 0;
     element<HTMLButtonElement>("selectAll").textContent = `Tout sélectionner (${filtered.length})`;
     element<HTMLButtonElement>("selectNone").disabled = selected.size === 0;
@@ -158,9 +164,10 @@ element("invoices").addEventListener("click", async (event) => {
     }
     if (action === "send") {
         const resend = Boolean(statuses[invoice.id]);
+        const status = statuses[invoice.id];
         const question = resend
-            ? `La facture n°${invoice.id} a déjà été envoyée (${statuses[invoice.id].status}). La renvoyer à ${invoice.email} ?`
-            : `Envoyer la facture n°${invoice.id} à ${invoice.email} ?`;
+            ? `⚠ La facture n°${invoice.id} a déjà été envoyée (${status.status} le ${frenchDate(status.date)}).\n\nLa renvoyer par email à ${invoice.email} ?`
+            : `Envoyer la facture n°${invoice.id} par email à ${invoice.email} ?`;
         if (confirm(question))
             await withSending(async () => { await send(invoice, resend); });
     }
@@ -184,17 +191,14 @@ const sendBatch = async (batch: Invoice[]) => {
     });
 };
 
-element("sendAll").addEventListener("click", async () => {
-    const todo = invoices.filter(isTodo);
-    if (confirm(`Envoyer ${todo.length} facture(s) par email ?`))
-        await sendBatch(todo);
-});
-
 element("sendSelected").addEventListener("click", async () => {
     const batch = invoices.filter((invoice) => selected.has(invoice.id));
     const resent = batch.filter((invoice) => statuses[invoice.id]).length;
-    const question = `Envoyer ${batch.length} facture(s) par email ?`
-        + (resent ? `\n\n${resent} d'entre elles ont déjà été envoyées et seront renvoyées.` : "");
+    // Avertissement en tête si des factures déjà envoyées font partie de la sélection
+    const warning = resent === 1 ? `⚠ 1 des ${batch.length} factures sélectionnées a déjà été envoyée : elle sera renvoyée.`
+        : `⚠ ${resent} des ${batch.length} factures sélectionnées ont déjà été envoyées : elles seront renvoyées.`;
+    const question = (resent ? `${warning}\n\n` : "")
+        + `Envoyer ${batch.length} facture(s) par email ?`;
     if (confirm(question))
         await sendBatch(batch);
 });
