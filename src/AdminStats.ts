@@ -241,7 +241,7 @@ export function renderSeasonsStats(container: HTMLElement, seasons: SeasonMember
         <table>
           <thead><tr><th>Saison</th><th>Adhérents au ${sameDay}</th><th>Adhérents en fin de saison</th>
             <th>Montant encaissé au ${sameDay}</th><th>Montant encaissé en fin de saison</th></tr></thead>
-          <tbody>${[...totals].reverse().map((total) => `<tr><td>${escape(seasonName(total.season, total.current))}</td>
+          <tbody>${totals.map((total) => `<tr><td>${escape(seasonName(total.season, total.current))}</td>
             <td>${total.membersAtSameDay}</td><td>${ended(total, total.members)}</td>
             <td>${euros(total.revenueAtSameDay)}</td><td>${ended(total, euros(total.revenue))}</td></tr>`).join("")}</tbody>
         </table>`, `Pour chaque saison, les adhérents inscrits au ${sameDay} (même date qu'aujourd'hui), et le total à la fin de la saison.`)}
@@ -263,13 +263,14 @@ export function renderSeasonsStats(container: HTMLElement, seasons: SeasonMember
         type: "line",
         data: {
             labels: allDays.map(seasonDayLabel),
-            // Les plus anciennes d'abord : la saison en cours et la précédente sont tracées par-dessus
+            // La saison en cours d'abord : en tête de la légende, et tracée par-dessus les autres (Chart.js trace le
+            // premier jeu de données en dernier)
             datasets: curves.map((curve, index) => ({
                 ...line(`Saison ${curve.name}`,
                     stepValues(curve.points, (point) => point.day, allDays).map((count, i) => (index === 0 && allDays[i] > currentLastDay ? null : count)),
                     seasonColor(index, curves.length)),
                 borderWidth: index < SERIES.length ? 2 : 1.5,
-            })).reverse(),
+            })),
         },
         options: { scales: axes({ time: true }) },
     }, true);
@@ -286,14 +287,14 @@ export function renderSeasonsStats(container: HTMLElement, seasons: SeasonMember
         options: { scales: axes() },
     }, true);
 
-    // Saison précédente d'abord (orange), puis la saison en cours (bleu), comme sur la courbe
+    // La saison en cours d'abord (bleu), puis la précédente (orange), comme sur la courbe
     draw("chart-months", {
         type: "bar",
         data: {
             labels: [...MONTHS.slice(8), ...MONTHS.slice(0, 8)],
             datasets: [
-                bars(`Saison ${previous.season}`, bySeasonMonth(previous.season, previous.members), SERIES[1]),
                 bars(`Saison ${season}`, bySeasonMonth(season, members), SERIES[0]),
+                bars(`Saison ${previous.season}`, bySeasonMonth(previous.season, previous.members), SERIES[1]),
             ],
         },
         options: { scales: axes() },
@@ -304,8 +305,8 @@ export function renderSeasonsStats(container: HTMLElement, seasons: SeasonMember
         data: {
             labels: ACTIVITY_COUNTS,
             datasets: [
-                bars(`Saison ${previous.season} au ${sameDay}`, activityCounts(untilSameDay(previous.season, previous.members, season, date)), SERIES[1]),
                 bars(`Saison ${season}`, activityCounts(members), SERIES[0]),
+                bars(`Saison ${previous.season} au ${sameDay}`, activityCounts(untilSameDay(previous.season, previous.members, season, date)), SERIES[1]),
             ],
         },
         options: { scales: axes() },

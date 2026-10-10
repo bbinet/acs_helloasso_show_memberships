@@ -15,20 +15,20 @@ describe("totalsBySeason", () => {
     // Aujourd'hui : 10 octobre de la saison en cours
     const totals = totalsBySeason(seasons, "2026-10-10");
 
-    it("donne le nombre d'adhérents et le montant encaissé de chaque saison, de la plus ancienne à la plus récente", () => {
+    it("donne le nombre d'adhérents et le montant encaissé de chaque saison, de la saison en cours à la plus ancienne", () => {
         expect(totals.map(({ season, members, revenue }) => ({ season, members, revenue }))).toEqual([
-            { season: "2024-2025", members: 2, revenue: 40 },
-            { season: "2025-2026", members: 4, revenue: 80 },
             { season: "2026-2027", members: 2, revenue: 75.5 },
+            { season: "2025-2026", members: 4, revenue: 80 },
+            { season: "2024-2025", members: 2, revenue: 40 },
         ]);
     });
 
     it("donne aussi les adhérents et le montant encaissé de chaque saison au même jour de saison qu'aujourd'hui", () => {
         // Au 10 octobre 2025 : les inscrits du 2 et du 20 septembre
         expect(totals.map(({ season, membersAtSameDay, revenueAtSameDay }) => [season, membersAtSameDay, revenueAtSameDay])).toEqual([
-            ["2024-2025", 2, 40],
-            ["2025-2026", 2, 40],
             ["2026-2027", 2, 75.5],
+            ["2025-2026", 2, 40],
+            ["2024-2025", 2, 40],
         ]);
     });
 });
@@ -51,12 +51,12 @@ describe("activitiesBySeason", () => {
     // Aujourd'hui : 10 octobre de la saison en cours
     const table = activitiesBySeason(seasons, "2026-10-10");
 
-    it("compte les adhérents de chaque activité, saison par saison, de la plus ancienne à la plus récente", () => {
-        expect(table.seasons).toEqual(["2024-2025", "2025-2026", "2026-2027"]);
+    it("compte les adhérents de chaque activité, saison par saison, de la saison en cours à la plus ancienne", () => {
+        expect(table.seasons).toEqual(["2026-2027", "2025-2026", "2024-2025"]);
         expect(table.rows.map((row) => [row.name, row.counts])).toEqual([
-            ["Tennis", [1, 1, 2]],
-            ["Yoga", [0, 2, 1]],
-            ["Football", [1, 0, 0]],
+            ["Tennis", [2, 1, 1]],
+            ["Yoga", [1, 2, 0]],
+            ["Football", [0, 0, 1]],
             [NO_ACTIVITY, [0, 1, 0]],
         ]);
     });

@@ -115,11 +115,11 @@ export const untilSameDay = <T extends { date: string }>(season: string, members
     return members.filter((member) => seasonDay(season, member.date) <= lastDay);
 };
 
-// Adhérents et montant encaissé de chaque saison (données de la plus récente à la plus ancienne), en fin de saison
-// et au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ »), de la plus ancienne à la plus récente
+// Adhérents et montant encaissé de chaque saison (de la saison en cours à la plus ancienne), en fin de saison
+// et au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ »)
 export function totalsBySeason(seasons: SeasonMembers[], today: string) {
     const currentSeason = seasons[0].season;
-    return [...seasons].reverse().map(({ season, members }) => {
+    return seasons.map(({ season, members }) => {
         const atSameDay = keyFigures(untilSameDay(season, members, currentSeason, today));
         return {
             season,
@@ -145,18 +145,16 @@ export function bySeasonMonth(season: string, members: { date: string }[]) {
 
 const countActivities = (members: Member[]) => new Map(groupBy(members, activitiesOf).map(([name, group]) => [name, group.length]));
 
-// Adhérents par activité et par saison (de la plus ancienne à la plus récente), et comparaison de la saison
+// Adhérents par activité et par saison (de la saison en cours à la plus ancienne), et comparaison de la saison
 // en cours avec la précédente au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ »)
 export function activitiesBySeason(seasons: SeasonMembers[], today: string) {
-    const ordered = [...seasons].reverse();
-    const counts = ordered.map(({ members }) => countActivities(members));
+    const counts = seasons.map(({ members }) => countActivities(members));
     const [current, previous] = seasons;
     const sameDay = previous ? countActivities(untilSameDay(previous.season, previous.members, current.season, today)) : null;
     const names = [...new Set(counts.flatMap((count) => [...count.keys()]))];
-    const currentCounts = counts[counts.length - 1];
-    const previousCounts = counts.length > 1 ? counts[counts.length - 2] : new Map<string, number>();
+    const [currentCounts, previousCounts = new Map<string, number>()] = counts;
     return {
-        seasons: ordered.map(({ season }) => season),
+        seasons: seasons.map(({ season }) => season),
         previousSeason: previous?.season ?? null,
         rows: names
             .map((name) => {
