@@ -9,14 +9,28 @@
     <div id="service">Registre des envois : chargement...</div>
     <div id="dates"></div>
     <h2>Adhésions ACS - saison <span id="season"></span></h2>
-    <p><a href="../">Liste des adhérents</a></p>
 
     <nav class="tabs" role="tablist">
-      <button role="tab" data-tab="list" aria-selected="true">Factures et exports</button>
+      <button role="tab" data-tab="members" aria-selected="true">Adhérents</button>
+      <button role="tab" data-tab="list" aria-selected="false">Factures et exports</button>
       <button role="tab" data-tab="stats" aria-selected="false">Statistiques</button>
     </nav>
 
-    <section id="tab-list">
+    <!-- Même liste que la page des adhérents -->
+    <section id="tab-members">
+      <div class="row">
+        <div id="m-filter" class="sm-12 md-6 lg-6 col"></div>
+        <div id="m-search" class="sm-12 md-6 lg-6 col"></div>
+      </div>
+      <h3>Nombre total de résultats : <span id="m-count"></span></h3>
+      <div id="m-datas"><p>...</p></div>
+      <div class="row">
+        <span id="m-paginationOptions" class="sm-5 md-4 lg-3 col"></span>
+        <span id="m-pages" class="col-fill col"></span>
+      </div>
+    </section>
+
+    <section id="tab-list" hidden>
       <div class="row flex-middle filters">
         <div class="sm-12 md-6 col">
           <input id="search" type="search" class="search" placeholder="Rechercher (nom, entreprise, email, n°)..." />

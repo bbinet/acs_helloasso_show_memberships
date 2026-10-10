@@ -1,4 +1,4 @@
-// Page d'administration (admin/) : factures des adhérents de la saison en cours (aperçu, envoi par email),
+// Page d'administration (admin/) : adhérents de la saison en cours, leurs factures (aperçu, envoi par email),
 // exports et statistiques.
 import 'papercss'
 import './style.css'
@@ -10,8 +10,11 @@ import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
 import { emailList, toCsv, uniqueByEmail } from "./Export";
 import { renderStats, type SeasonHistory } from "./AdminStats";
+import { showMembersTable } from "./MembersTable";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
+// Liste de la page des adhérents, reprise telle quelle par l'onglet « Adhérents »
+import { fields as memberFields, datas as memberDatas } from "../acs.json"
 
 const { season, invoices, issuer, signature, service: serviceConfig, history } = adminData as {
     season: string;
@@ -265,6 +268,7 @@ fillSelect("formula", [...new Set(invoices.map((invoice) => invoice.formula))].s
 const showTab = (tab: string) => {
     document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button) =>
         button.setAttribute("aria-selected", String(button.dataset.tab === tab)));
+    element("tab-members").hidden = tab !== "members";
     element("tab-list").hidden = tab !== "list";
     element("tab-stats").hidden = tab !== "stats";
     if (tab === "stats")
@@ -278,6 +282,14 @@ document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button)
 
 const initialise = async () => {
     element("season").textContent = season;
+    // Onglet « Adhérents » : la même liste que la page des adhérents
+    showMembersTable(memberFields, memberDatas,
+        { datas: "m-datas", count: "m-count", filter: "m-filter", search: "m-search", pages: "m-pages", paginationOptions: "m-paginationOptions" },
+        { activitiesField: 4, searchFields: [0, 1, 2] },
+    ).catch((e) => {
+        console.error(e);
+        element("m-datas").innerHTML = `<div class="alert alert-warning">Problème technique : la liste ne peut pas être affichée.</div>`;
+    });
     showDates(true);
     render();
     // Chargé en avance, pour que le premier aperçu soit rapide ; une erreur sera signalée à l'usage

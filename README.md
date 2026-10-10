@@ -78,10 +78,13 @@ publication :
 3. La page de la nouvelle saison sera publiée au prochain passage du cron
    (ou lancer `./cron.sh`).
 
-# Page d'administration : factures et statistiques
+# Page d'administration : adhérents, factures et statistiques
 
 La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, différent de celui de la page des
-adhérents, qui ne change pas. Elle a deux onglets.
+adhérents, qui ne change pas. Elle a trois onglets.
+
+**Adhérents** (onglet ouvert par défaut) : la même liste que la page des adhérents, avec le filtre par activité,
+la recherche et le tri.
 
 **Factures et exports** : la liste des adhésions de la saison en cours (une par adhésion non remboursée),
 100 par page, avec :
