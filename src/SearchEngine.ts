@@ -12,6 +12,8 @@ export class SearchEngine implements Filters
     public nbCharsForSearch : number=0;
     public placeholder: string="";
     public automaticSearch: boolean=false;
+    // Sans bouton, la recherche ne se lance qu'automatiquement, pendant la saisie
+    public showButton: boolean=true;
     private _inputValue: string="";
     public searchMode:SearchModeSettings= // par défaut, recherche lâche, mais peut devenir stricte en passant tout à false
     {
@@ -96,7 +98,10 @@ export class SearchEngine implements Filters
             html+=` placeholder="${this.placeholder.replace("NB", ""+this.nbCharsForSearch)}"`;
         else if(this.placeholder !== "")
             html+=` placeholder="${this.placeholder}"`;
-        html+=`>&nbsp;<input type="submit" id="freeDatas2HTMLSearchBtn" value="${this._btnTxt}"></form>`;
+        html+=">";
+        if(this.showButton)
+            html+=`&nbsp;<input type="submit" id="freeDatas2HTMLSearchBtn" value="${this._btnTxt}">`;
+        html+="</form>";
         this. _datasViewElt.eltDOM!.innerHTML=html;// "!" car l'existence de "eltDOM" est testé par le constructeur
 
         // L'affichage est actualisé quand l'éventuel nombre de caractères est atteint ou quand le champ est vidé, car cela permet d'annuler ce filtre.
@@ -110,9 +115,9 @@ export class SearchEngine implements Filters
                 mySearch._converter.refreshView();
         });
 
-        // Lorsque le bouton est cliqué, la recherche est lancée, quelque soit le nombre de caractères saisis.
-        const searchBtn=document.getElementById("freeDatas2HTMLSearchBtn") as HTMLInputElement;
-        searchBtn.addEventListener("click", function(e)
+        // Lorsque le bouton est cliqué (ou la touche Entrée appuyée), la recherche est lancée, quelque soit le nombre
+        // de caractères saisis. Sans bouton, la touche Entrée ne doit pas non plus recharger la page.
+        document.getElementById("freeDatas2HTMLSearch")!.addEventListener("submit", function(e)
        {
             e.preventDefault();
             mySearch._converter.refreshView();

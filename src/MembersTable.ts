@@ -69,11 +69,12 @@ export async function showMembersTable(fields: string[], datas: string[][], elem
     // + Un moteur de recherche, mais filtrant les données seulement sur certains champs :
     const search=new SearchEngine(converter, { id:elements.search }, options.searchFields);
     search.label="Rechercher :";
-    search.btnTxt="OK";
-    // La recherche se lance automatiquement, dès que 2 caractères sont saisis :
+    // La recherche se lance automatiquement, dès le premier caractère saisi : pas besoin de bouton
     search.automaticSearch=true;
-    search.nbCharsForSearch=2;
-    search.placeholder="Tapez votre recherche...";
+    search.nbCharsForSearch=1;
+    search.showButton=false;
+    // Texte d'aide : les champs sur lesquels porte la recherche, par exemple « Rechercher (prénom, nom, entreprise)... »
+    search.placeholder=`Rechercher (${options.searchFields.map((index) => fields[index].toLowerCase()).join(", ")})...`;
     search.filter2HTML();
 
     // Injection des filtres dans le convertisseur :
