@@ -28,6 +28,7 @@ export class FreeDatas2HTML
     private _datas: ParseResults["datas"]=[];
     private _datas2Rend: {[index: string]:string}[]=[];
     private _nbDatasValid: number=0;
+    private _firstDataShown: number=0; // rang de la première donnée affichée (pagination)
 
     // Le parseur, comme le render sont initialisés.
     // Mais ils peuvent être modifiés ensuite par des instances de classes respectant leurs interfaces.
@@ -248,7 +249,10 @@ export class FreeDatas2HTML
             // Car son emplacement peut être situé dans le template d'affichage des données et donc pas encore affiché.
             // La recherche doit être faite à chaque fois pour cette même raison (bug du DOM).
             this.datasCounterElt=FreeDatas2HTML.checkInDOMById(this.datasCounterElt);
-            this.datasCounterElt.eltDOM!.textContent=""+this._nbDatasValid; // "!", car on vient de tester l'existence de l'élément.
+            // Avec la pagination, la plage affichée quand toutes les données ne le sont pas : « 250 (1 à 100 affichées) »
+            const shown=this._datas2Rend.length;
+            const range=shown < this._nbDatasValid ? ` (${this._firstDataShown+1} à ${this._firstDataShown+shown} affichées)` : "";
+            this.datasCounterElt.eltDOM!.textContent=this._nbDatasValid+range; // "!", car on vient de tester l'existence de l'élément.
         }
     }
 
@@ -282,6 +286,7 @@ export class FreeDatas2HTML
         if (this.pagination !== undefined && this.pagination.selectedValue !== undefined &&  this.pagination.pages !== undefined && this.pagination.pages.selectedValue !== undefined)
             firstData=this.pagination.selectedValue*(this.pagination.pages.selectedValue-1);
         let maxData=(this.pagination !== undefined && this.pagination.selectedValue !== undefined) ? this.pagination.selectedValue : this._datas.length;
+        this._firstDataShown=firstData;
         
         // Création du tableau des données à afficher :
         let datas2Display=[];
