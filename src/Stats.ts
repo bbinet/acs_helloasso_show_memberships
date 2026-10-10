@@ -8,18 +8,22 @@ type Statuses = Record<string, InvoiceStatus>;
 // Somme en centimes, pour éviter les erreurs d'arrondi des nombres à virgule
 const sum = (amounts: number[]) => amounts.reduce((total, amount) => total + Math.round(amount * 100), 0) / 100;
 
-const sendingCounts = (invoices: Invoice[], statuses: Statuses) => {
+// Adhésion de n'importe quelle saison : facture complète (saison en cours) ou résumé sans donnée personnelle
+// (saisons archivées, sans n° : leurs factures comptent comme « à envoyer »)
+export type Member = Pick<Invoice, "date" | "activities" | "formula" | "lines" | "total"> & { id?: number };
+
+const sendingCounts = (invoices: Member[], statuses: Statuses) => {
     const counts = { sent: 0, todo: 0, problems: 0 };
     for (const invoice of invoices) {
-        const category = statusCategory(statuses[invoice.id]);
+        const category = statusCategory(invoice.id === undefined ? undefined : statuses[invoice.id]);
         counts[category === "problem" ? "problems" : category]++;
     }
     return counts;
 };
 
 // Regroupe les adhésions selon une ou plusieurs clés chacune (un adhérent compte dans chacune de ses activités)
-const groupBy = (invoices: Invoice[], keys: (invoice: Invoice) => string[]) => {
-    const groups = new Map<string, Invoice[]>();
+const groupBy = <T extends Member>(invoices: T[], keys: (invoice: T) => string[]) => {
+    const groups = new Map<string, T[]>();
     for (const invoice of invoices)
         for (const key of keys(invoice)) {
             const group = groups.get(key);
@@ -31,7 +35,7 @@ const groupBy = (invoices: Invoice[], keys: (invoice: Invoice) => string[]) => {
     return [...groups.entries()];
 };
 
-export function keyFigures(invoices: Invoice[], statuses: Statuses) {
+export function keyFigures(invoices: Member[], statuses: Statuses) {
     return {
         members: invoices.length,
         revenue: sum(invoices.map((invoice) => invoice.total)),
@@ -39,15 +43,15 @@ export function keyFigures(invoices: Invoice[], statuses: Statuses) {
     };
 }
 
-export interface ActivityGroup {
+export interface ActivityGroup<T extends Member = Invoice> {
     name: string;
     count: number;
     revenue: number; // recettes des options de cette activité
-    members: Invoice[];
+    members: T[];
 }
 
 // Adhérents par activité (un adhérent compte dans chacune de ses activités), sans activité en dernier
-export function byActivity(invoices: Invoice[]): ActivityGroup[] {
+export function byActivity<T extends Member>(invoices: T[]): ActivityGroup<T>[] {
     return groupBy(invoices, (invoice) => (invoice.activities.length ? invoice.activities : [NO_ACTIVITY]))
         .map(([name, members]) => ({
             name,
@@ -59,7 +63,7 @@ export function byActivity(invoices: Invoice[]): ActivityGroup[] {
 }
 
 // Adhérents et recettes (prix du tarif seul, sans les options) de chaque tarif, du plus choisi au moins choisi
-export function byFormula(invoices: Invoice[]) {
+export function byFormula(invoices: Member[]) {
     return groupBy(invoices, (invoice) => [invoice.formula])
         .map(([name, members]) => ({ name, count: members.length, revenue: sum(members.map((m) => m.lines[0].amount)) }))
         .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr"));

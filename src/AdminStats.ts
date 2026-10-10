@@ -6,7 +6,7 @@ import { statusCategory, type InvoiceStatus } from "./InvoiceService";
 import { loadScript } from "./loadScript";
 import { escape, euros } from "./format";
 import { activitiesBySeason, activityCounts, byActivity, byFormula, bySeasonMonth, cumulative, keyFigures, seasonCurve, totalsBySeason,
-         untilSameDay, type SeasonMembers } from "./Stats";
+         untilSameDay, type ActivityGroup, type Member } from "./Stats";
 
 const CHARTJS = {
     src: "https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js",
@@ -23,7 +23,7 @@ const MONTHS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "aoû
 
 type Statuses = Record<string, InvoiceStatus>;
 // Saisons archivées, de la plus récente à la plus ancienne
-export type SeasonHistory = SeasonMembers;
+export interface SeasonHistory { season: string; members: Member[] }
 
 const shortDate = (date: string) => `${Number(date.slice(8, 10))} ${MONTHS[Number(date.slice(5, 7)) - 1]}`;
 // Jour de saison (depuis le 1er juillet) => « 15 sept. »
@@ -105,26 +105,58 @@ const block = (title: string, body: string, note = "") =>
 const canvas = (id: string, label: string, height = "") =>
     `<div class="chart"${height ? ` style="height:${height}"` : ""}><canvas id="${id}" aria-label="${label}"></canvas></div>`;
 
+// Saison affichée par le bilan : la saison en cours tant qu'aucune autre n'est choisie
+let shownSeason: string | null = null;
+
+// Écart avec une autre saison, sous un chiffre clé : « ▲ +32 par rapport à 2025-2026 au 10 oct. »
+const delta = (value: number, other: number, label: string, format = (n: number) => String(n)) => {
+    const diff = Math.round((value - other) * 100) / 100;
+    const text = diff > 0 ? `▲ +${format(diff)}` : diff < 0 ? `▼ −${format(-diff)}` : "=";
+    return `<div class="delta ${diff > 0 ? "up" : diff < 0 ? "down" : ""}">${text} par rapport à ${escape(label)}</div>`;
+};
+
 // Sous-onglet « Bilan de saison » : chiffres clés, inscriptions, tarifs, activités et nombre d'activités par adhérent
-// de la saison en cours
-export async function renderStats(container: HTMLElement, invoices: Invoice[], statuses: Statuses) {
+// de la saison en cours, ou d'une saison archivée choisie au-dessus. Les saisons archivées n'ont pas de données
+// personnelles (pas de listes d'adhérents) ni de statuts d'envoi des factures.
+export async function renderStats(container: HTMLElement, season: string, invoices: Invoice[], statuses: Statuses, history: SeasonHistory[]) {
     const current = reset();
-    const figures = keyFigures(invoices, statuses);
-    const activities = byActivity(invoices);
-    const formulas = byFormula(invoices);
-    const counts = activityCounts(invoices);
+    // Toutes les saisons, de la plus récente (en cours) à la plus ancienne
+    const seasons: SeasonHistory[] = [{ season, members: invoices }, ...history];
+    const index = Math.max(0, seasons.findIndex((s) => s.season === shownSeason));
+    const isCurrent = index === 0;
+    const { members } = seasons[index];
+    const previous = seasons[index + 1];
+    const date = today();
+    // Comparaison avec la saison précédente : au même jour pour la saison en cours, entière pour une saison terminée
+    const reference = previous && (isCurrent ? untilSameDay(previous.season, previous.members, season, date) : previous.members);
+    const referenceLabel = previous ? `${previous.season}${isCurrent ? ` au ${shortDate(date)}` : ""}` : "";
+    const figures = keyFigures(members, isCurrent ? statuses : {});
+    const activities = byActivity(members);
+    const formulas = byFormula(members);
     const activitiesHeight = `${Math.max(12, activities.length * 2.2)}rem`;
-    const tile = (value: string | number, label: string) => `<div class="tile"><div class="value">${value}</div><div class="label">${label}</div></div>`;
+    const tile = (value: string | number, label: string, extra = "") =>
+        `<div class="tile"><div class="value">${value}</div><div class="label">${label}</div>${extra}</div>`;
+    const activityName = (group: ActivityGroup<Member>) => isCurrent
+        ? `<details><summary>${escape(group.name)}</summary><ul>${(group.members as Invoice[])
+            .map((m) => `<li>${escape(m.firstName)} ${escape(m.lastName)}${m.company ? ` (${escape(m.company)})` : ""}</li>`).join("")}</ul></details>`
+        : escape(group.name);
 
     container.innerHTML = `
+      <div class="season-picker" role="group" aria-label="Saison affichée">
+        <span>Saison :</span>
+        ${seasons.map((s, i) => `<button data-season="${escape(s.season)}" aria-pressed="${i === index}">${escape(s.season)}${i === 0 ? " (en cours)" : ""}</button>`).join("")}
+      </div>
+      ${isCurrent ? "" : `<p class="note">Saison terminée : les listes d'adhérents et l'envoi des factures ne sont disponibles que pour la saison en cours.</p>`}
       <div class="tiles">
-        ${tile(figures.members, "adhérents")}
-        ${tile(euros(figures.revenue), "encaissés")}
+        ${tile(figures.members, "adhérents", reference ? delta(figures.members, reference.length, referenceLabel) : "")}
+        ${tile(euros(figures.revenue), "encaissés", reference ? delta(figures.revenue, keyFigures(reference, {}).revenue, referenceLabel, euros) : "")}
+        ${isCurrent ? `
         ${tile(figures.sent, "factures envoyées")}
         ${tile(figures.todo, "factures à envoyer")}
-        ${tile(figures.problems, "factures en erreur")}
+        ${tile(figures.problems, "factures en erreur")}` : ""}
       </div>
-      ${block("Inscriptions depuis le début de la saison", canvas("chart-cumulative", "Nombre cumulé d'inscriptions et de factures envoyées"))}
+      ${block(isCurrent ? "Inscriptions depuis le début de la saison" : "Inscriptions au fil de la saison",
+          canvas("chart-cumulative", isCurrent ? "Nombre cumulé d'inscriptions et de factures envoyées" : "Nombre cumulé d'inscriptions"))}
       ${block("Adhérents par tarif", `
         <table>
           <thead><tr><th>Tarif</th><th>Adhérents</th><th>Recettes du tarif (sans les options)</th></tr></thead>
@@ -136,8 +168,7 @@ export async function renderStats(container: HTMLElement, invoices: Invoice[], s
           <thead><tr><th>Activité</th><th>Adhérents</th><th>Recettes des options</th></tr></thead>
           <tbody>${activities.map((group) => `
             <tr>
-              <td><details><summary>${escape(group.name)}</summary><ul>${group.members
-                  .map((m) => `<li>${escape(m.firstName)} ${escape(m.lastName)}${m.company ? ` (${escape(m.company)})` : ""}</li>`).join("")}</ul></details></td>
+              <td>${activityName(group)}</td>
               <td>${group.count}</td>
               <td>${euros(group.revenue)}</td>
             </tr>`).join("")}
@@ -145,13 +176,19 @@ export async function renderStats(container: HTMLElement, invoices: Invoice[], s
         </table>`)}
       ${block("Nombre d'activités par adhérent", canvas("chart-counts", "Nombre d'activités par adhérent", "16rem"))}`;
 
+    container.querySelectorAll<HTMLButtonElement>(".season-picker button").forEach((button) =>
+        button.addEventListener("click", () => {
+            shownSeason = button.dataset.season!;
+            renderStats(container, season, invoices, statuses, history).catch(console.error);
+        }));
+
     if (!await loadChartJs(current))
         return;
 
     // Inscriptions et factures envoyées : même unité (nombre d'adhérents), donc un seul axe
-    const registered = cumulative(invoices.map((invoice) => invoice.date));
-    const sent = cumulative(invoices.map((invoice) => statuses[invoice.id])
-        .filter((status) => statusCategory(status) === "sent").map((status) => status.date.slice(0, 10)));
+    const registered = cumulative(members.map((member) => member.date));
+    const sent = isCurrent ? cumulative(invoices.map((invoice) => statuses[invoice.id])
+        .filter((status) => statusCategory(status) === "sent").map((status) => status.date.slice(0, 10))) : [];
     const days = [...new Set([...registered, ...sent].map((point) => point.date))].sort();
     const byDate = (point: { date: string }) => point.date;
     draw("chart-cumulative", {
@@ -160,11 +197,11 @@ export async function renderStats(container: HTMLElement, invoices: Invoice[], s
             labels: days.map(shortDate),
             datasets: [
                 line("Inscriptions", stepValues(registered, byDate, days), SERIES[0], true),
-                line("Factures envoyées", stepValues(sent, byDate, days), SERIES[1], true),
+                ...(isCurrent ? [line("Factures envoyées", stepValues(sent, byDate, days), SERIES[1], true)] : []),
             ],
         },
         options: { scales: axes({ time: true }) },
-    }, true);
+    }, isCurrent);
 
     const names = activities.map((group) => group.name);
     draw("chart-activities", {
@@ -177,7 +214,7 @@ export async function renderStats(container: HTMLElement, invoices: Invoice[], s
         type: "bar",
         data: {
             labels: ACTIVITY_COUNTS,
-            datasets: [{ label: "Adhérents", data: counts, backgroundColor: SERIES[0], ...bar }],
+            datasets: [{ label: "Adhérents", data: activityCounts(members), backgroundColor: SERIES[0], ...bar }],
         },
         options: { scales: axes() },
     });
@@ -188,7 +225,7 @@ export async function renderStats(container: HTMLElement, invoices: Invoice[], s
 export async function renderSeasonsStats(container: HTMLElement, season: string, invoices: Invoice[], history: SeasonHistory[]) {
     const current = reset();
     // Toutes les saisons, de la plus récente (en cours) à la plus ancienne
-    const seasons: SeasonMembers[] = [{ season, members: invoices }, ...history];
+    const seasons: SeasonHistory[] = [{ season, members: invoices }, ...history];
     if (seasons.length < 2) {
         container.innerHTML = `<p>Pas encore de saison précédente à comparer.</p>`;
         return;

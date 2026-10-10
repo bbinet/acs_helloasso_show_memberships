@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activitiesBySeason, bySeasonMonth, totalsBySeason } from "../src/Stats";
+import { activitiesBySeason, byActivity, byFormula, bySeasonMonth, keyFigures, totalsBySeason } from "../src/Stats";
 import { NO_ACTIVITY } from "../src/InvoiceFilter";
 
 const member = (date: string, activities: string[] = [], total = 20) => ({ date, activities, formula: "Adhésion", total });
@@ -76,5 +76,19 @@ describe("activitiesBySeason", () => {
         const single = activitiesBySeason([seasons[0]], "2026-10-10");
         expect(single.previousSeason).toBeNull();
         expect(single.rows[0]).toMatchObject({ name: "Tennis", previousAtSameDay: null, change: null });
+    });
+});
+
+describe("bilan d'une saison archivée", () => {
+    // Résumés sans nom ni n° d'adhésion (voir summarize)
+    const archived = [
+        { date: "2025-09-02", activities: ["Tennis"], formula: "Adhésion", total: 30, lines: [{ label: "Adhésion", amount: 20 }, { label: "Tennis", amount: 10 }] },
+        { date: "2025-09-20", activities: [], formula: "Adhésion + salle", total: 60, lines: [{ label: "Adhésion + salle", amount: 60 }] },
+    ];
+
+    it("donne les chiffres clés, les tarifs et les activités à partir des résumés", () => {
+        expect(keyFigures(archived, {})).toMatchObject({ members: 2, revenue: 90 });
+        expect(byFormula(archived)).toEqual([{ name: "Adhésion", count: 1, revenue: 20 }, { name: "Adhésion + salle", count: 1, revenue: 60 }]);
+        expect(byActivity(archived).map((group) => [group.name, group.count, group.revenue])).toEqual([["Tennis", 1, 10], [NO_ACTIVITY, 1, 0]]);
     });
 });

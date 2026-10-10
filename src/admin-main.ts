@@ -273,7 +273,7 @@ const showStats = () => {
     const container = element("stats");
     const rendering = statsView === "seasons" ? renderSeasonsStats(container, season, invoices, history ?? [])
         : statsView === "activities" ? renderActivityStats(container, season, invoices, history ?? [])
-        : renderStats(container, invoices, statuses);
+        : renderStats(container, season, invoices, statuses, history ?? []);
     rendering.catch((e: Error) => {
         console.error(e);
         container.insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape(e.message)}</p>`);

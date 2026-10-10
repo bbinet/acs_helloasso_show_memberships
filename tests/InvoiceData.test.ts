@@ -78,11 +78,13 @@ describe("buildInvoice", () => {
 });
 
 describe("summarize", () => {
-    it("ne garde d'une adhésion que la date, les activités, le tarif et le montant : aucune donnée personnelle", () => {
-        expect(summarize(buildInvoice(item())!)).toEqual({
+    it("ne garde d'une adhésion que la date, les activités, le tarif, les lignes et le montant : aucune donnée personnelle", () => {
+        const invoice = buildInvoice(item())!;
+        expect(summarize(invoice)).toEqual({
             date: "2024-09-15",
             activities: ["Football", "Tennis"],
             formula: "Adhésion à l'ACS",
+            lines: invoice.lines,
             total: 35,
         });
     });

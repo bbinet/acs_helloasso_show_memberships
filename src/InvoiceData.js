@@ -48,10 +48,10 @@ export function buildInvoice(item) {
 }
 
 /**
- * @typedef {{ date: string, activities: string[], formula: string, total: number }} MemberSummary
+ * @typedef {{ date: string, activities: string[], formula: string, lines: InvoiceLine[], total: number }} MemberSummary
  */
 
-/** Résumé d'une adhésion pour les statistiques des saisons passées : aucune donnée personnelle */
+/** Résumé d'une adhésion pour les statistiques des saisons passées (lignes : tarif et options) : aucune donnée personnelle */
 export function summarize(invoice) {
-    return { date: invoice.date, activities: invoice.activities, formula: invoice.formula, total: invoice.total };
+    return { date: invoice.date, activities: invoice.activities, formula: invoice.formula, lines: invoice.lines, total: invoice.total };
 }
