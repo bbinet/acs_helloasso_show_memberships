@@ -32,7 +32,9 @@ input.search { width:100%; }
 .pagination button { margin:0.2rem; }
 /* Factures et exports : à gauche la recherche et la période d'inscription, à droite les filtres */
 .filters { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); gap:0.6rem 2rem; margin:1rem 0; }
-.filter-block { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem 1rem; align-content:start; }
+/* Deux champs par ligne, ou un seul sur les petits écrans */
+.filter-block { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap:0.6rem 1rem; align-content:start; }
+.filter-block > * { min-width:0; }
 .filter-block .wide { grid-column:1 / -1; }
 .filters input, .filters select { width:100%; max-width:100%; margin:0; }
 /* Champ de date avec son libellé à l'intérieur du cadre : « Inscrits du jj/mm/aaaa » */
