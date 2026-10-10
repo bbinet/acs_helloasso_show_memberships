@@ -121,3 +121,10 @@ export interface SeasonMembers {
 // Jour de saison d'une date (« AAAA-MM-JJ »), compté depuis le 1er juillet de la première année de la saison
 export const seasonDay = (season: string, date: string) =>
     Math.round((Date.parse(`${date}T00:00:00Z`) - Date.UTC(Number(season.slice(0, 4)), 6, 1)) / DAY);
+
+// Adhérents et montant encaissé de chaque saison (données de la plus récente à la plus ancienne),
+// de la plus ancienne à la plus récente
+export function totalsBySeason(seasons: SeasonMembers[]) {
+    return [...seasons].reverse().map(({ season, members }) =>
+        ({ season, members: members.length, revenue: sum(members.map((member) => member.total)) }));
+}

@@ -4,7 +4,7 @@ import type { Invoice } from "./InvoiceData.js";
 import { statusCategory, type InvoiceStatus } from "./InvoiceService";
 import { loadScript } from "./loadScript";
 import { escape, euros } from "./format";
-import { activityCounts, byActivity, byFormula, byMonth, cumulative, keyFigures, seasonCurve,
+import { activityCounts, byActivity, byFormula, byMonth, cumulative, keyFigures, seasonCurve, totalsBySeason,
          type SeasonMembers } from "./Stats";
 
 const CHARTJS = {
@@ -63,6 +63,10 @@ const seasonColor = (index: number, count: number) => {
     return `#${level}${level}${level}`;
 };
 
+// Barres par saison : la saison en cours, pas terminée, en bleu plus clair
+const CURRENT = "#8fb8ea";
+const seasonBars = (seasons: string[], current: string) => seasons.map((name) => (name === current ? CURRENT : SERIES[0]));
+
 const bar = { borderRadius: 4, borderSkipped: "start" as const, maxBarThickness: 28 };
 const line = (label: string, data: (number | null)[], color: string, stepped = false) =>
     ({ label, data, borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, stepped });
@@ -92,6 +96,7 @@ export async function renderStats(container: HTMLElement, season: string, invoic
     const tile = (value: string | number, label: string) => `<div class="tile"><div class="value">${value}</div><div class="label">${label}</div></div>`;
     // Toutes les saisons, de la plus récente (en cours) à la plus ancienne
     const seasons: SeasonMembers[] = [{ season, members: invoices }, ...history];
+    const totals = totalsBySeason(seasons);
 
     container.innerHTML = `
       <div class="tiles">
@@ -112,6 +117,17 @@ export async function renderStats(container: HTMLElement, season: string, invoic
         <h3>Comparaison avec les saisons précédentes</h3>
         <p><small>Nombre cumulé d'inscriptions, au même jour de chaque saison (comptée à partir du 1er juillet).</small></p>
         <div class="chart"><canvas id="chart-seasons" aria-label="Inscriptions cumulées par saison"></canvas></div>
+      </div>
+
+      <div class="stats-block">
+        <h3>Adhérents par saison</h3>
+        <p><small>La saison en cours, pas terminée, est en bleu clair.</small></p>
+        <div class="chart" style="height:16rem"><canvas id="chart-totals" aria-label="Adhérents par saison"></canvas></div>
+        <table>
+          <thead><tr><th>Saison</th><th>Adhérents</th><th>Montant encaissé</th></tr></thead>
+          <tbody>${[...totals].reverse().map((total) => `<tr><td>${escape(total.season)}${total.season === season ? " (en cours)" : ""}</td>
+            <td>${total.members}</td><td>${euros(total.revenue)}</td></tr>`).join("")}</tbody>
+        </table>
       </div>` : ""}
 
       <div class="stats-block">
@@ -195,6 +211,15 @@ export async function renderStats(container: HTMLElement, season: string, invoic
             },
             options: { scales: axes({ time: true }) },
         }, true);
+
+        draw("chart-totals", {
+            type: "bar",
+            data: {
+                labels: totals.map((total) => (total.season === season ? `${total.season} (en cours)` : total.season)),
+                datasets: [{ label: "Adhérents", data: totals.map((total) => total.members), backgroundColor: seasonBars(totals.map((total) => total.season), season), ...bar }],
+            },
+            options: { scales: axes() },
+        });
     }
 
     const names = activities.map((group) => group.name);
