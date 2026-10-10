@@ -84,7 +84,8 @@ La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, diff
 adhérents, qui ne change pas. Elle liste les factures de la saison en cours (une par adhésion non remboursée),
 100 par page, et permet de :
 
-- chercher une facture (nom, entreprise, email, n°) et filtrer sur le statut d'envoi ;
+- chercher une facture (nom, entreprise, email, n°) et filtrer par activité, tarif, période d'inscription et
+  statut d'envoi ;
 - voir et télécharger chaque facture en PDF, générée dans le navigateur (modèle repris de
   `acs_helloasso_invoicing`) ;
 - envoyer une facture par email, les factures cochées, ou toutes celles pas encore envoyées ;

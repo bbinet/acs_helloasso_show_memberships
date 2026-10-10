@@ -59,4 +59,14 @@ describe("buildInvoice", () => {
         const { user: _, ...anonymised } = item();
         expect(buildInvoice(anonymised)).toBeNull();
     });
+
+    it("liste les activités choisies, sans l'option « N'oubliez pas »", () => {
+        expect(buildInvoice(item())!.activities).toEqual(["Football", "Tennis"]);
+        expect(buildInvoice({ ...item(), options: undefined })!.activities).toEqual([]);
+    });
+
+    it("garde le nom du tarif choisi, quel qu'il soit", () => {
+        expect(buildInvoice(item())!.formula).toBe("Adhésion à l'ACS");
+        expect(buildInvoice({ ...item(), name: "Adhésion avec accès à la salle Emile Allais" })!.formula).toBe("Adhésion avec accès à la salle Emile Allais");
+    });
 });

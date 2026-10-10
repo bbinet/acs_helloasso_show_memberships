@@ -6,6 +6,7 @@ import { invoiceFileName, invoicePdf, loadPdfMake } from "./InvoicePdf";
 import { InvoiceService, statusCategory, type InvoiceStatus } from "./InvoiceService";
 import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
+import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
 
@@ -38,13 +39,16 @@ const statusCell = (invoice: Invoice) => {
     return `<span class="badge ${badge}">${escape(status.status)}</span> <small>le ${frenchDate(status.date)}</small>${detail}`;
 };
 
-const filteredInvoices = () => {
-    const search = element<HTMLInputElement>("search").value.trim().toLowerCase();
-    const status = element<HTMLSelectElement>("filter").value;
-    return invoices.filter((invoice) =>
-        (!search || `${invoice.id} ${invoice.firstName} ${invoice.lastName} ${invoice.company} ${invoice.email}`.toLowerCase().includes(search))
-        && (!status || statusCategory(statuses[invoice.id]) === status));
-};
+const value = (id: string) => element<HTMLInputElement | HTMLSelectElement>(id).value;
+const criteria = (): FilterCriteria => ({
+    search: value("search"),
+    status: value("filter") as FilterCriteria["status"],
+    activity: value("activity"),
+    formula: value("formula"),
+    from: value("from"),
+    to: value("to"),
+});
+const filteredInvoices = () => filterInvoices(invoices, statuses, criteria());
 
 // Taille de page : 0 = tout afficher
 const pageSize = () => Number(element<HTMLSelectElement>("pageSize").value);
@@ -67,6 +71,7 @@ const render = () => {
           <td>${frenchDate(invoice.date)}</td>
           <td>${escape(invoice.firstName)} ${escape(invoice.lastName)}<br/><small>${escape(invoice.company)}</small></td>
           <td>${escape(invoice.email)}</td>
+          <td class="activities">${invoice.activities.map(escape).join("<br/>")}</td>
           <td>${euros(invoice.total)}</td>
           <td>${statusCell(invoice)}</td>
           <td>
@@ -80,7 +85,7 @@ const render = () => {
         <table class="table-hover">
           <thead><tr>
             <th class="select"><input type="checkbox" data-select="page" title="Sélectionner les factures de la page" ${pageSelected ? "checked" : ""}/></th>
-            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email</th><th>Montant</th><th>Envoi</th><th>Facture</th>
+            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email</th><th>Activités</th><th>Montant</th><th>Envoi</th><th>Facture</th>
           </tr></thead>
           <tbody>${rows.join("")}</tbody>
         </table>`;
@@ -219,8 +224,15 @@ element("pages").addEventListener("click", (event) => {
 });
 
 // Nouvelle recherche, nouveau filtre ou nouvelle taille de page : retour à la première page
-for (const [id, type] of [["search", "input"], ["filter", "change"], ["pageSize", "change"]])
+for (const [id, type] of [["search", "input"], ["filter", "change"], ["activity", "change"], ["formula", "change"],
+                          ["from", "change"], ["to", "change"], ["pageSize", "change"]])
     element(id).addEventListener(type, () => { page = 1; render(); });
+
+// Listes des activités et des tarifs pour les filtres, telles que dans HelloAsso
+const fillSelect = (id: string, names: string[]) => element(id).insertAdjacentHTML("beforeend",
+    names.map((name) => `<option value="${escape(name)}">${escape(name)}</option>`).join(""));
+fillSelect("activity", [...[...new Set(invoices.flatMap((invoice) => invoice.activities))].sort((a, b) => a.localeCompare(b, "fr")), NO_ACTIVITY]);
+fillSelect("formula", [...new Set(invoices.map((invoice) => invoice.formula))].sort((a, b) => a.localeCompare(b, "fr")));
 
 const initialise = async () => {
     element("season").textContent = season;

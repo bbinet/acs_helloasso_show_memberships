@@ -11,9 +11,12 @@
     <h2>Factures ACS - saison <span id="season"></span></h2>
     <p><a href="../">Liste des adhérents</a></p>
 
-    <div class="row flex-middle">
+    <div class="row flex-middle filters">
       <div class="sm-12 md-6 col">
         <input id="search" type="search" class="search" placeholder="Rechercher (nom, entreprise, email, n°)..." />
+      </div>
+      <div class="sm-6 md-3 col">
+        <select id="activity"><option value="">Toutes les activités</option></select>
       </div>
       <div class="sm-6 md-3 col">
         <select id="filter">
@@ -23,7 +26,18 @@
           <option value="problem">En erreur</option>
         </select>
       </div>
+      <div class="sm-12 md-4 col">
+        <select id="formula"><option value="">Tous les tarifs</option></select>
+      </div>
       <div class="sm-6 md-3 col">
+        <label for="from">Inscrits du</label>
+        <input id="from" type="date" />
+      </div>
+      <div class="sm-6 md-3 col">
+        <label for="to">au</label>
+        <input id="to" type="date" />
+      </div>
+      <div class="sm-12 md-2 col">
         <select id="pageSize">
           <option value="50">50 par page</option>
           <option value="100" selected>100 par page</option>
@@ -42,7 +56,7 @@
     </div>
     <p id="progress"></p>
 
-    <h3>Nombre de factures : <span id="count"></span></h3>
+    <h3>Nombre d'adhérents : <span id="count"></span></h3>
     <div id="invoices"><p>...</p></div>
     <div id="pages" class="row flex-center"></div>
 

@@ -28,3 +28,8 @@ body { position:relative; }
 input.search { width:100%; }
 #invoices td.select, #invoices th.select { width:2rem; }
 #pages button { margin:0.2rem; }
+.filters label { margin:0; font-size:0.9rem; }
+.filters input[type="date"] { width:100%; }
+td.activities { font-size:0.9rem; }
+/* Listes de filtres : jamais plus larges que leur colonne (les noms de tarifs sont longs) */
+.filters select { width:100%; max-width:100%; text-overflow:ellipsis; }

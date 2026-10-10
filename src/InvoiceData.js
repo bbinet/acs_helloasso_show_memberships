@@ -12,6 +12,7 @@ export function title(str) {
  *   id: number, date: string, object: string,
  *   firstName: string, lastName: string, company: string, email: string,
  *   lines: InvoiceLine[], total: number,
+ *   activities: string[], formula: string,
  * }} Invoice
  */
 
@@ -26,10 +27,9 @@ export function buildInvoice(item) {
         return null;
     const company = (item.customFields ?? []).find((field) => field.name == "Société");
     // Montants HelloAsso en centimes. L'option « N'oubliez pas ... » n'est qu'un rappel, pas une prestation.
-    const lines = [{ label: item.name, cents: item.amount }].concat(
-        (item.options ?? [])
-            .filter((option) => !option.name.includes("oubliez pas"))
-            .map((option) => ({ label: option.name, cents: option.amount ?? 0 })));
+    const options = (item.options ?? []).filter((option) => !option.name.includes("oubliez pas"));
+    const lines = [{ label: item.name, cents: item.amount }]
+        .concat(options.map((option) => ({ label: option.name, cents: option.amount ?? 0 })));
     return {
         id: item.id,
         date: item.order.date.split("T")[0],
@@ -40,5 +40,8 @@ export function buildInvoice(item) {
         email: item.payer.email,
         lines: lines.map(({ label, cents }) => ({ label, amount: cents / 100 })),
         total: lines.reduce((sum, { cents }) => sum + cents, 0) / 100,
+        activities: options.map((option) => option.name),
+        // Tarif choisi (par exemple avec ou sans accès à la salle Émile Allais) : son nom tel que dans HelloAsso
+        formula: item.name,
     };
 }
