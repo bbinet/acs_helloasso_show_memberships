@@ -1,4 +1,5 @@
-// Page d'administration (admin/) : factures des adhérents de la saison en cours, aperçu et envoi par email.
+// Page d'administration (admin/) : factures des adhérents de la saison en cours (aperçu, envoi par email),
+// exports.
 import 'papercss'
 import './style.css'
 import { showDates } from "./Dates";
@@ -7,6 +8,7 @@ import { InvoiceService, statusCategory, type InvoiceStatus } from "./InvoiceSer
 import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
+import { emailList, toCsv, uniqueByEmail } from "./Export";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
 
@@ -227,6 +229,29 @@ element("pages").addEventListener("click", (event) => {
 for (const [id, type] of [["search", "input"], ["filter", "change"], ["activity", "change"], ["formula", "change"],
                           ["from", "change"], ["to", "change"], ["pageSize", "change"]])
     element(id).addEventListener(type, () => { page = 1; render(); });
+
+// Exports de la liste filtrée (toutes les pages)
+element("exportCsv").addEventListener("click", () => {
+    const blob = new Blob([toCsv(filteredInvoices(), statuses)], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `adherents-acs-${season}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+});
+
+element("copyEmails").addEventListener("click", async () => {
+    const list = filteredInvoices();
+    const emails = emailList(list);
+    const count = uniqueByEmail(list).length;
+    try {
+        await navigator.clipboard.writeText(emails);
+        element("progress").textContent = `${count} adresse(s) copiée(s) : à coller dans le champ « Cci » d'un mail.`;
+    } catch {
+        // Presse-papiers refusé par le navigateur : adresses affichées pour un copier-coller à la main
+        prompt("Copier les adresses :", emails);
+    }
+});
 
 // Listes des activités et des tarifs pour les filtres, telles que dans HelloAsso
 const fillSelect = (id: string, names: string[]) => element(id).insertAdjacentHTML("beforeend",
