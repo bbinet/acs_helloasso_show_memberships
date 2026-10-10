@@ -9,7 +9,7 @@ import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
 import { emailList, toCsv, uniqueByEmail } from "./Export";
-import { renderActivityStats, renderStats, type SeasonHistory } from "./AdminStats";
+import { renderActivityStats, renderSeasonsStats, renderStats, type SeasonHistory } from "./AdminStats";
 import { showMembersTable } from "./MembersTable";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
@@ -264,22 +264,36 @@ const fillSelect = (id: string, names: string[]) => element(id).insertAdjacentHT
 fillSelect("activity", [...[...new Set(invoices.flatMap((invoice) => invoice.activities))].sort((a, b) => a.localeCompare(b, "fr")), NO_ACTIVITY]);
 fillSelect("formula", [...new Set(invoices.map((invoice) => invoice.formula))].sort((a, b) => a.localeCompare(b, "fr")));
 
-// Onglets ; les statistiques sont calculées à l'ouverture de l'onglet, avec les derniers statuts d'envoi
+// Sous-onglets des statistiques (bilan de saison, comparaison des saisons, comparaison des saisons par activité) :
+// les statistiques sont calculées à l'affichage, avec les derniers statuts d'envoi
+let statsView = "season";
+const showStats = () => {
+    document.querySelectorAll<HTMLButtonElement>("nav.subtabs button").forEach((button) =>
+        button.setAttribute("aria-selected", String(button.dataset.view === statsView)));
+    const container = element("stats");
+    const rendering = statsView === "seasons" ? renderSeasonsStats(container, season, invoices, history ?? [])
+        : statsView === "activities" ? renderActivityStats(container, season, invoices, history ?? [])
+        : renderStats(container, invoices, statuses);
+    rendering.catch((e: Error) => {
+        console.error(e);
+        container.insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape(e.message)}</p>`);
+    });
+};
+document.querySelectorAll<HTMLButtonElement>("nav.subtabs button").forEach((button) =>
+    button.addEventListener("click", () => {
+        statsView = button.dataset.view!;
+        showStats();
+    }));
+
+// Onglets
 const showTab = (tab: string) => {
     document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button) =>
         button.setAttribute("aria-selected", String(button.dataset.tab === tab)));
     element("tab-members").hidden = tab !== "members";
     element("tab-list").hidden = tab !== "list";
     element("tab-stats").hidden = tab !== "stats";
-    element("tab-activities").hidden = tab !== "activities";
-    const failed = (id: string) => (e: Error) => {
-        console.error(e);
-        element(id).insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape(e.message)}</p>`);
-    };
     if (tab === "stats")
-        renderStats(element("stats"), season, invoices, statuses, history ?? []).catch(failed("stats"));
-    if (tab === "activities")
-        renderActivityStats(element("activity-stats"), season, invoices, history ?? []).catch(failed("activity-stats"));
+        showStats();
 };
 document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button) =>
     button.addEventListener("click", () => showTab(button.dataset.tab!)));

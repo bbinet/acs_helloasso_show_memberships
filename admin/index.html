@@ -14,7 +14,6 @@
       <button role="tab" data-tab="members" aria-selected="true">Adhérents</button>
       <button role="tab" data-tab="list" aria-selected="false">Factures et exports</button>
       <button role="tab" data-tab="stats" aria-selected="false">Statistiques</button>
-      <button role="tab" data-tab="activities" aria-selected="false">Statistiques par activité</button>
     </nav>
 
     <!-- Même liste que la page des adhérents -->
@@ -87,11 +86,12 @@
     </section>
 
     <section id="tab-stats" hidden>
+      <nav class="subtabs" role="tablist">
+        <button role="tab" data-view="season" aria-selected="true">Bilan de saison</button>
+        <button role="tab" data-view="seasons" aria-selected="false">Comparaison des saisons</button>
+        <button role="tab" data-view="activities" aria-selected="false">Comparaison des saisons par activité</button>
+      </nav>
       <div id="stats"><p>Chargement des statistiques...</p></div>
-    </section>
-
-    <section id="tab-activities" hidden>
-      <div id="activity-stats"><p>Chargement des statistiques...</p></div>
     </section>
 
     <script type="module" src="/src/admin-main.ts"></script>
