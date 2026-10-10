@@ -9,6 +9,7 @@ export const invoice = (id: number, overrides: Partial<Invoice> = {}): Invoice =
     lastName: "Dupont",
     company: "ACME",
     email: `adherent${id}@example.com`,
+    phone: "",
     lines: [{ label: "Adhésion à l'ACS", amount: 20 }],
     total: 20,
     activities: [],

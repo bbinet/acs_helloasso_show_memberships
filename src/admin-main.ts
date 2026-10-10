@@ -77,7 +77,7 @@ const render = () => {
           <td>${invoice.id}</td>
           <td>${frenchDate(invoice.date)}</td>
           <td>${escape(invoice.firstName)} ${escape(invoice.lastName)}<br/><small>${escape(invoice.company)}</small></td>
-          <td>${escape(invoice.email)}</td>
+          <td>${escape(invoice.email)}${invoice.phone ? `<br/><small>${escape(invoice.phone)}</small>` : ""}</td>
           <td class="activities">${invoice.activities.map(escape).join("<br/>")}</td>
           <td>${euros(invoice.total)}</td>
           <td>${statusCell(invoice)}</td>
@@ -92,7 +92,7 @@ const render = () => {
         <table class="table-hover">
           <thead><tr>
             <th class="select"><input type="checkbox" data-select="page" title="Sélectionner les factures de la page" ${pageSelected ? "checked" : ""}/></th>
-            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email</th><th>Activités</th><th>Montant</th><th>Envoi</th><th>Facture</th>
+            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email / téléphone</th><th>Activités</th><th>Montant</th><th>Envoi</th><th>Facture</th>
           </tr></thead>
           <tbody>${rows.join("")}</tbody>
         </table>`;

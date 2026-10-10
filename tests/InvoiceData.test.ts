@@ -69,4 +69,9 @@ describe("buildInvoice", () => {
         expect(buildInvoice(item())!.formula).toBe("Adhésion à l'ACS");
         expect(buildInvoice({ ...item(), name: "Adhésion avec accès à la salle Emile Allais" })!.formula).toBe("Adhésion avec accès à la salle Emile Allais");
     });
+
+    it("garde le téléphone de l'adhérent, s'il l'a donné", () => {
+        expect(buildInvoice(item())!.phone).toBe("06 12 34 56 78");
+        expect(buildInvoice({ ...item(), customFields: [{ name: "Société", answer: "X" }] })!.phone).toBe("");
+    });
 });

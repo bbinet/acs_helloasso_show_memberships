@@ -8,11 +8,11 @@ const field = (value: string) => (/[;"\r\n]/.test(value) ? `"${value.replace(/"/
 
 // CSV lisible directement par Excel : BOM UTF-8 (accents), séparateur « ; », montants avec une virgule
 export function toCsv(invoices: Invoice[], statuses: Record<string, InvoiceStatus>): string {
-    const header = ["N°", "Payée le", "Prénom", "Nom", "Entreprise", "Email", "Tarif", "Activités", "Montant", "Envoi", "Envoyée le"];
+    const header = ["N°", "Payée le", "Prénom", "Nom", "Entreprise", "Email", "Téléphone", "Tarif", "Activités", "Montant", "Envoi", "Envoyée le"];
     const rows = invoices.map((invoice) => {
         const status = statuses[invoice.id];
         return [
-            String(invoice.id), frenchDate(invoice.date), invoice.firstName, invoice.lastName, invoice.company, invoice.email,
+            String(invoice.id), frenchDate(invoice.date), invoice.firstName, invoice.lastName, invoice.company, invoice.email, invoice.phone,
             invoice.formula, invoice.activities.join(", "), invoice.total.toFixed(2).replace(".", ","),
             status?.status ?? "", status ? frenchDate(status.date) : "",
         ];

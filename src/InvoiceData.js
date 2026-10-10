@@ -10,7 +10,7 @@ export function title(str) {
  * @typedef {{ label: string, amount: number }} InvoiceLine  montant en euros
  * @typedef {{
  *   id: number, date: string, object: string,
- *   firstName: string, lastName: string, company: string, email: string,
+ *   firstName: string, lastName: string, company: string, email: string, phone: string,
  *   lines: InvoiceLine[], total: number,
  *   activities: string[], formula: string,
  * }} Invoice
@@ -25,7 +25,7 @@ export function isBillable(item) {
 export function buildInvoice(item) {
     if (!isBillable(item))
         return null;
-    const company = (item.customFields ?? []).find((field) => field.name == "Société");
+    const answer = (name) => (item.customFields ?? []).find((field) => field.name == name)?.answer ?? "";
     // Montants HelloAsso en centimes. L'option « N'oubliez pas ... » n'est qu'un rappel, pas une prestation.
     const options = (item.options ?? []).filter((option) => !option.name.includes("oubliez pas"));
     const lines = [{ label: item.name, cents: item.amount }]
@@ -36,8 +36,9 @@ export function buildInvoice(item) {
         object: item.order.formName,
         firstName: title(item.user.firstName),
         lastName: title(item.user.lastName),
-        company: (company?.answer ?? "").toUpperCase(),
+        company: answer("Société").toUpperCase(),
         email: item.payer.email,
+        phone: answer("Téléphone"),
         lines: lines.map(({ label, cents }) => ({ label, amount: cents / 100 })),
         total: lines.reduce((sum, { cents }) => sum + cents, 0) / 100,
         activities: options.map((option) => option.name),

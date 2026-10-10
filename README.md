@@ -86,8 +86,8 @@ adhérents, qui ne change pas. Elle a trois onglets.
 **Adhérents** (onglet ouvert par défaut) : la même liste que la page des adhérents, avec le filtre par activité,
 la recherche et le tri.
 
-**Factures et exports** : la liste des adhésions de la saison en cours (une par adhésion non remboursée),
-100 par page, avec :
+**Factures et exports** : la liste des adhésions de la saison en cours (une par adhésion non remboursée), avec le
+téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par page, avec :
 
 - une recherche (nom, entreprise, email, n°) et des filtres par activité, tarif, période d'inscription et
   statut d'envoi de la facture ;
