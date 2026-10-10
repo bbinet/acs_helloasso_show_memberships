@@ -9,17 +9,24 @@ type Statuses = Record<string, InvoiceStatus>;
 const sum = (amounts: number[]) => amounts.reduce((total, amount) => total + Math.round(amount * 100), 0) / 100;
 
 // Adhésion de n'importe quelle saison : facture complète (saison en cours) ou résumé sans donnée personnelle
-// (saisons archivées, sans n° : leurs factures comptent comme « à envoyer »)
-export type Member = Pick<Invoice, "date" | "activities" | "formula" | "lines" | "total"> & { id?: number };
+// (saisons archivées, voir summarize)
+export type Member = Pick<Invoice, "date" | "activities" | "formula" | "lines" | "total">;
 
-const sendingCounts = (invoices: Member[], statuses: Statuses) => {
+// Adhésions d'une saison (« 2026-2027 »)
+export interface SeasonMembers {
+    season: string;
+    members: Member[];
+}
+
+// Factures envoyées, à envoyer et en erreur (saison en cours seulement : seule à avoir des statuts d'envoi)
+export function sendingCounts(invoices: Invoice[], statuses: Statuses) {
     const counts = { sent: 0, todo: 0, problems: 0 };
     for (const invoice of invoices) {
-        const category = statusCategory(invoice.id === undefined ? undefined : statuses[invoice.id]);
+        const category = statusCategory(statuses[invoice.id]);
         counts[category === "problem" ? "problems" : category]++;
     }
     return counts;
-};
+}
 
 // Regroupe les adhésions selon une ou plusieurs clés chacune (un adhérent compte dans chacune de ses activités)
 const groupBy = <T extends Member>(invoices: T[], keys: (invoice: T) => string[]) => {
@@ -35,13 +42,13 @@ const groupBy = <T extends Member>(invoices: T[], keys: (invoice: T) => string[]
     return [...groups.entries()];
 };
 
-export function keyFigures(invoices: Member[], statuses: Statuses) {
-    return {
-        members: invoices.length,
-        revenue: sum(invoices.map((invoice) => invoice.total)),
-        ...sendingCounts(invoices, statuses),
-    };
+// Nombre d'adhérents et montant encaissé
+export function keyFigures(members: Member[]) {
+    return { members: members.length, revenue: sum(members.map((member) => member.total)) };
 }
+
+// Activités d'un adhérent, ou NO_ACTIVITY s'il n'en a pas
+const activitiesOf = (member: Member) => (member.activities.length ? member.activities : [NO_ACTIVITY]);
 
 export interface ActivityGroup<T extends Member = Invoice> {
     name: string;
@@ -52,7 +59,7 @@ export interface ActivityGroup<T extends Member = Invoice> {
 
 // Adhérents par activité (un adhérent compte dans chacune de ses activités), sans activité en dernier
 export function byActivity<T extends Member>(invoices: T[]): ActivityGroup<T>[] {
-    return groupBy(invoices, (invoice) => (invoice.activities.length ? invoice.activities : [NO_ACTIVITY]))
+    return groupBy(invoices, activitiesOf)
         .map(([name, members]) => ({
             name,
             count: members.length,
@@ -97,33 +104,29 @@ export function seasonCurve(season: string, dates: string[]) {
     return cumulative(dates).map(({ date, count }) => ({ day: seasonDay(season, date), count }));
 }
 
-// Adhésions d'une saison, résumées (voir summarize) : la saison en cours peut passer ses factures telles quelles
-export interface SeasonMembers {
-    season: string;
-    members: { date: string; activities: string[]; total: number }[];
-}
-
 // Jour de saison d'une date (« AAAA-MM-JJ »), compté depuis le 1er juillet de la première année de la saison
-export const seasonDay = (season: string, date: string) =>
+const seasonDay = (season: string, date: string) =>
     Math.round((Date.parse(`${date}T00:00:00Z`) - Date.UTC(Number(season.slice(0, 4)), 6, 1)) / DAY);
 
 // Adhésions d'une saison inscrites au plus tard au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ ») dans la
 // saison en cours : pour comparer une saison passée à la saison en cours, qui n'est pas terminée
-export const untilSameDay = <T extends { date: string }>(season: string, members: T[], currentSeason: string, today: string) =>
-    members.filter((member) => seasonDay(season, member.date) <= seasonDay(currentSeason, today));
+export const untilSameDay = <T extends { date: string }>(season: string, members: T[], currentSeason: string, today: string) => {
+    const lastDay = seasonDay(currentSeason, today);
+    return members.filter((member) => seasonDay(season, member.date) <= lastDay);
+};
 
 // Adhérents et montant encaissé de chaque saison (données de la plus récente à la plus ancienne), en fin de saison
 // et au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ »), de la plus ancienne à la plus récente
 export function totalsBySeason(seasons: SeasonMembers[], today: string) {
     const currentSeason = seasons[0].season;
     return [...seasons].reverse().map(({ season, members }) => {
-        const atSameDay = untilSameDay(season, members, currentSeason, today);
+        const atSameDay = keyFigures(untilSameDay(season, members, currentSeason, today));
         return {
             season,
-            members: members.length,
-            revenue: sum(members.map((member) => member.total)),
-            membersAtSameDay: atSameDay.length,
-            revenueAtSameDay: sum(atSameDay.map((member) => member.total)),
+            current: season === currentSeason,
+            ...keyFigures(members),
+            membersAtSameDay: atSameDay.members,
+            revenueAtSameDay: atSameDay.revenue,
         };
     });
 }
@@ -140,14 +143,7 @@ export function bySeasonMonth(season: string, members: { date: string }[]) {
     return counts;
 }
 
-const activitiesOf = (member: SeasonMembers["members"][number]) => (member.activities.length ? member.activities : [NO_ACTIVITY]);
-const countActivities = (members: SeasonMembers["members"]) => {
-    const counts = new Map<string, number>();
-    for (const member of members)
-        for (const name of activitiesOf(member))
-            counts.set(name, (counts.get(name) ?? 0) + 1);
-    return counts;
-};
+const countActivities = (members: Member[]) => new Map(groupBy(members, activitiesOf).map(([name, group]) => [name, group.length]));
 
 // Adhérents par activité et par saison (de la plus ancienne à la plus récente), et comparaison de la saison
 // en cours avec la précédente au même jour de saison qu'aujourd'hui (« AAAA-MM-JJ »)

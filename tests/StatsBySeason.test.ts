@@ -87,7 +87,7 @@ describe("bilan d'une saison archivée", () => {
     ];
 
     it("donne les chiffres clés, les tarifs et les activités à partir des résumés", () => {
-        expect(keyFigures(archived, {})).toMatchObject({ members: 2, revenue: 90 });
+        expect(keyFigures(archived)).toEqual({ members: 2, revenue: 90 });
         expect(byFormula(archived)).toEqual([{ name: "Adhésion", count: 1, revenue: 20 }, { name: "Adhésion + salle", count: 1, revenue: 60 }]);
         expect(byActivity(archived).map((group) => [group.name, group.count, group.revenue])).toEqual([["Tennis", 1, 10], [NO_ACTIVITY, 1, 0]]);
     });

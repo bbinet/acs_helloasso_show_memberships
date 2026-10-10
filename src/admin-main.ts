@@ -9,7 +9,7 @@ import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
 import { emailList, toCsv, uniqueByEmail } from "./Export";
-import { renderActivityStats, renderSeasonsStats, renderStats, type SeasonHistory } from "./AdminStats";
+import { loadCharts, renderActivityStats, renderSeasonsStats, renderStats, type SeasonMembers } from "./AdminStats";
 import { showMembersTable } from "./MembersTable";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
@@ -22,7 +22,7 @@ const { season, invoices, issuer, signature, service: serviceConfig, history } =
     issuer: Issuer;
     signature: string | null;
     service: { url: string; token: string } | null;
-    history?: SeasonHistory[];
+    history?: SeasonMembers[];
 };
 const settings = { issuer, signature };
 const service = serviceConfig ? new InvoiceService(serviceConfig.url, serviceConfig.token, season) : null;
@@ -266,18 +266,24 @@ fillSelect("formula", [...new Set(invoices.map((invoice) => invoice.formula))].s
 
 // Sous-onglets des statistiques (bilan de saison, comparaison des saisons, comparaison des saisons par activité) :
 // les statistiques sont calculées à l'affichage, avec les derniers statuts d'envoi
+// Toutes les saisons, de la plus récente (en cours) à la plus ancienne
+const seasons: SeasonMembers[] = [{ season, members: invoices }, ...(history ?? [])];
+const statsViews: Record<string, (container: HTMLElement) => void> = {
+    season: (container) => renderStats(container, seasons, invoices, statuses),
+    seasons: (container) => renderSeasonsStats(container, seasons),
+    activities: (container) => renderActivityStats(container, seasons),
+};
 let statsView = "season";
-const showStats = () => {
+const showStats = async () => {
     document.querySelectorAll<HTMLButtonElement>("nav.subtabs button").forEach((button) =>
         button.setAttribute("aria-selected", String(button.dataset.view === statsView)));
     const container = element("stats");
-    const rendering = statsView === "seasons" ? renderSeasonsStats(container, season, invoices, history ?? [])
-        : statsView === "activities" ? renderActivityStats(container, season, invoices, history ?? [])
-        : renderStats(container, season, invoices, statuses, history ?? []);
-    rendering.catch((e: Error) => {
-        console.error(e);
-        container.insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape(e.message)}</p>`);
-    });
+    const error = await loadCharts().then(() => null, (e: Error) => e);
+    statsViews[statsView](container);
+    if (error) {
+        console.error(error);
+        container.insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape(error.message)}</p>`);
+    }
 };
 document.querySelectorAll<HTMLButtonElement>("nav.subtabs button").forEach((button) =>
     button.addEventListener("click", () => {

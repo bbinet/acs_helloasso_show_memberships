@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityCounts, byActivity, byFormula, cumulative, keyFigures, seasonCurve } from "../src/Stats";
+import { activityCounts, byActivity, byFormula, cumulative, keyFigures, seasonCurve, sendingCounts } from "../src/Stats";
 import { NO_ACTIVITY } from "../src/InvoiceFilter";
 import { invoice } from "./fixtures";
 
@@ -13,8 +13,14 @@ const invoices = [
 const statuses = { "1": sent, "2": { ...sent, status: "non distribuée" as const } };
 
 describe("keyFigures", () => {
-    it("compte les adhérents, le montant encaissé et les factures par statut", () => {
-        expect(keyFigures(invoices, statuses)).toEqual({ members: 3, revenue: 100.5, sent: 1, todo: 1, problems: 1 });
+    it("compte les adhérents et le montant encaissé", () => {
+        expect(keyFigures(invoices)).toEqual({ members: 3, revenue: 100.5 });
+    });
+});
+
+describe("sendingCounts", () => {
+    it("compte les factures par statut d'envoi", () => {
+        expect(sendingCounts(invoices, statuses)).toEqual({ sent: 1, todo: 1, problems: 1 });
     });
 });
 

@@ -51,7 +51,8 @@ export function buildInvoice(item) {
  * @typedef {{ date: string, activities: string[], formula: string, lines: InvoiceLine[], total: number }} MemberSummary
  */
 
-/** Résumé d'une adhésion pour les statistiques des saisons passées (lignes : tarif et options) : aucune donnée personnelle */
+/** Résumé d'une adhésion pour les statistiques des saisons passées (lignes : tarif et options) : aucune donnée personnelle
+ * @returns {MemberSummary} */
 export function summarize(invoice) {
     return { date: invoice.date, activities: invoice.activities, formula: invoice.formula, lines: invoice.lines, total: invoice.total };
 }
