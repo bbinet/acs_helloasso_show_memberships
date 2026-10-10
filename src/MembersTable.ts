@@ -50,8 +50,8 @@ export async function showMembersTable(fields: string[], datas: string[][], elem
     }
 
     // Configuration de la pagination :
-    const pagination=new Pagination(converter, { id:elements.pages }, "Page à afficher :");
-    pagination.options={ displayElement: { id:elements.paginationOptions }, values: [50,100,200,400,1000] , name: "Nombre de lignes par page :" };
+    const pagination=new Pagination(converter, { id:elements.pages }, "Page");
+    pagination.options={ displayElement: { id:elements.paginationOptions }, values: [50,100,200] , name: "Nombre de lignes par page" };
     pagination.selectedValue=100;
     converter.pagination=pagination;
     pagination.options2HTML();

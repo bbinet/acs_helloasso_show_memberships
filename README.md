@@ -87,7 +87,8 @@ adhérents, qui ne change pas. Elle a trois onglets.
 la recherche et le tri.
 
 **Factures et exports** : la liste des adhésions de la saison en cours (une par adhésion non remboursée), avec le
-téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par page, avec :
+téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par page (choix et pages en bas de
+la liste, comme dans l'onglet Adhérents), avec :
 
 - une recherche (nom, entreprise, email, n°) et des filtres par activité, tarif, période d'inscription et
   statut d'envoi de la facture ;

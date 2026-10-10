@@ -83,17 +83,18 @@ export class Pagination implements Paginations
         return this._pages;
     }
 
-    // Création du <select> permettant de choisir la pagination
+    // Création du <select> permettant de choisir la pagination : « 100 par page », ..., « Toutes »
+    // (comme dans l'onglet « Factures et exports » de la page admin)
     public options2HTML() : void
     {
         if(this._options === undefined)
             throw new Error(errors.pagination2HTMLFail);
         else
         {
-            let selectorsHTML="<label for='freeDatas2HTMLPaginationSelector'>"+this._options.name+" </label><select name='freeDatas2HTMLPaginationSelector' id='freeDatas2HTMLPaginationSelector'><option value='0'>----</option>";
+            let selectorsHTML="<select name='freeDatas2HTMLPaginationSelector' id='freeDatas2HTMLPaginationSelector' aria-label='"+this._options.name+"'>";
             for(let i=0; i< this._options.values.length; i++)
-                 selectorsHTML+="<option value='"+(i+1)+"'>"+this._options.values[i]+"</option>";
-            selectorsHTML+="</select>";
+                 selectorsHTML+="<option value='"+(i+1)+"'>"+this._options.values[i]+" par page</option>";
+            selectorsHTML+="<option value='0'>Toutes</option></select>";
             this._options.displayElement.eltDOM!.innerHTML=selectorsHTML; // "!" car displayElement testé par le constructeur
             
             let selectElement=document.getElementById("freeDatas2HTMLPaginationSelector") as HTMLInputElement;
@@ -113,7 +114,8 @@ export class Pagination implements Paginations
         }
     }
 
-    // Création du <select> permettant de se déplacer entre les pages
+    // Création des boutons permettant de se déplacer entre les pages, la page affichée étant mise en évidence
+    // (comme dans l'onglet « Factures et exports » de la page admin)
     public pages2HTML() : void
     {
          if (this._selectedValue === undefined || this._converter.nbDatasValid <= this._selectedValue)
@@ -121,26 +123,25 @@ export class Pagination implements Paginations
          else
          {
             let nbPages=Math.ceil(this._converter.nbDatasValid/this._selectedValue);
-            let selectorsHTML="<label for='freeDatas2HTMLPagesSelector'>"+this.pages.name+"</label><select name='freeDatas2HTMLPagesSelector' id='freeDatas2HTMLPagesSelector'>";
+            const current=this.pages.selectedValue ?? 1;
             this.pages.values=[];
+            let buttonsHTML="";
             for(let j=1; j <= nbPages; j++)
             {
-                 selectorsHTML+="<option value='"+j+"'>"+j+"</option>";
-                 this.pages.values.push(j);
-             }
-            selectorsHTML+="</select>";
-            this.pages.displayElement.eltDOM!.innerHTML=selectorsHTML;
-            
-            let selectElement=document.getElementById("freeDatas2HTMLPagesSelector") as HTMLInputElement;
-            
-            let pagination=this;
-            selectElement.addEventListener("change", function()
-           {
-                pagination.pages.selectedValue=Number(selectElement.value);
+                buttonsHTML+="<button class='btn-small"+(j === current ? " btn-secondary" : "")+"' data-page='"+j+"' aria-label='"+this.pages.name+" "+j+"'>"+j+"</button>";
+                this.pages.values.push(j);
+            }
+            const displayElement=this.pages.displayElement.eltDOM!;
+            displayElement.innerHTML=buttonsHTML;
+
+            const pagination=this;
+            displayElement.querySelectorAll<HTMLButtonElement>("button").forEach((button) => button.addEventListener("click", function()
+            {
+                pagination.pages.selectedValue=Number(button.dataset.page);
                 pagination._converter.refreshView(true);
-                // Présélection de la page dont on vient de demander l'affichage :
-                selectElement.value=""+pagination.pages.selectedValue;
-            });
+                // Mise en évidence de la page dont on vient de demander l'affichage :
+                pagination.pages2HTML();
+            }));
         }
     }
 }
