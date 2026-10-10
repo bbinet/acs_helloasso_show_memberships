@@ -30,12 +30,19 @@ input.search { width:100%; }
 /* Pagination, en bas des listes : nombre de lignes par page, puis boutons des pages */
 .pagination select { width:100%; margin:0; }
 .pagination button { margin:0.2rem; }
+/* Factures et exports : à gauche la recherche et la période d'inscription, à droite les filtres */
+.filters { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); gap:0.6rem 2rem; margin:1rem 0; }
+.filter-block { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem 1rem; align-content:start; }
+.filter-block .wide { grid-column:1 / -1; }
+.filters input, .filters select { width:100%; max-width:100%; margin:0; }
+/* Champ de date avec son libellé à l'intérieur du cadre : « Inscrits du jj/mm/aaaa » */
+.date-field { display:flex; align-items:center; margin:0; border:2px solid #41403e; border-radius:15px 255px 15px 225px/225px 15px 255px 15px; background:#fff; }
+.date-field span { padding-left:0.6rem; white-space:nowrap; color:#6b6a65; font-size:0.9rem; }
+.date-field input[type="date"] { border:none; flex:1; min-width:0; padding:0.4rem 0.5rem; background:transparent; }
 /* Page admin : onglets */
 nav.tabs { display:flex; gap:0.5rem; margin:1rem 0; border-bottom:2px solid #41403e; }
 nav.tabs button { border-bottom:none; border-radius:15px 15px 0 0; margin-bottom:-2px; }
 nav.tabs button[aria-selected="true"] { background:#41403e; color:#fff; }
-.filters label { margin:0; font-size:0.9rem; }
-.filters input[type="date"] { width:100%; }
 td.activities { font-size:0.9rem; }
 /* Page admin : statistiques */
 .tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(11rem, 1fr)); gap:1rem; margin:1rem 0 2rem; }
@@ -65,7 +72,7 @@ nav.subtabs button[aria-selected="true"] { background:#2a78d6; border-color:#2a7
 .stats-block details { margin:0.2rem 0; }
 .stats-block details ul { font-size:0.9rem; columns:2; }
 /* Listes de filtres : jamais plus larges que leur colonne (les noms de tarifs sont longs) */
-.filters select { width:100%; max-width:100%; text-overflow:ellipsis; }
+.filters select { text-overflow:ellipsis; }
 /* Recherche de la liste des adhérents : toute la largeur de sa colonne */
 #freeDatas2HTMLSearchTxt { width:100%; }
 /* Comparaison des saisons par activité : tableau par saison et un petit graphe par activité */

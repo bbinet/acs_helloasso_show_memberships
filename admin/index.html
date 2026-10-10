@@ -31,31 +31,22 @@
     </section>
 
     <section id="tab-list" hidden>
-      <div class="row flex-middle filters">
-        <div class="sm-12 md-6 col">
-          <input id="search" type="search" class="search" placeholder="Rechercher (nom, entreprise, email, n°)..." />
+      <div class="filters">
+        <!-- À gauche : recherche et période d'inscription ; à droite : filtres -->
+        <div class="filter-block">
+          <input id="search" type="search" class="search wide" placeholder="Rechercher (nom, entreprise, email, n°)..." />
+          <label class="date-field"><span>Inscrits du</span><input id="from" type="date" /></label>
+          <label class="date-field"><span>au</span><input id="to" type="date" /></label>
         </div>
-        <div class="sm-6 md-3 col">
+        <div class="filter-block">
           <select id="activity"><option value="">Toutes les activités</option></select>
-        </div>
-        <div class="sm-6 md-3 col">
           <select id="filter">
             <option value="">Toutes les factures</option>
             <option value="todo">À envoyer</option>
             <option value="sent">Envoyées</option>
             <option value="problem">En erreur</option>
           </select>
-        </div>
-        <div class="sm-12 md-4 col">
-          <select id="formula"><option value="">Tous les tarifs</option></select>
-        </div>
-        <div class="sm-6 md-3 col">
-          <label for="from">Inscrits du</label>
-          <input id="from" type="date" />
-        </div>
-        <div class="sm-6 md-3 col">
-          <label for="to">au</label>
-          <input id="to" type="date" />
+          <select id="formula" class="wide"><option value="">Tous les tarifs</option></select>
         </div>
       </div>
       <div class="row flex-middle">
