@@ -26,8 +26,7 @@ dist-ssr
 config.json
 acs.json
 acs.json.old
-acs-archives
 gh-pages
 acs-admin.json
-acs-history
+archives.enc
 signature.png

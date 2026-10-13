@@ -2,6 +2,7 @@ import { ApiV5Client as HelloAsso } from "helloasso";
 import cfg from "../config.json" with { type: "json" };
 import fs from "fs";
 import { buildInvoice, isBillable, summarize } from "./InvoiceData.js";
+import { decryptArchive, deriveArchiveKey, encryptArchive } from "./ArchiveCrypto.js";
 
 function title(str) {
     return str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -39,29 +40,25 @@ export const GetItems = async (season = seasons[0]) =>
     return items;
 }
 
-// Données de la page des adhérents (acs.json)
-export const MembersData = (items, season = seasons[0]) =>
-{
-    let members = [];
-    // Adhésions remboursées, ou anonymisées par HelloAsso (pas d'adhérent et payeur vide) : ignorées
-    for (let item of items.filter(isBillable)) {
-        let options = (item.options ?? []).map((elt) => elt.name);
-        members.push([
-            title(item.user.firstName.trim()),
-            title(item.user.lastName.trim()),
-            item.customFields.find((elt) => elt.name == "Société").answer.toUpperCase(),
-            item.payer.email,
-            options.join(", ")
-        ]);
-    }
+const MEMBER_FIELDS = ["Prénom", "Nom", "Entreprise", "Email", "Activités"];
 
-    return JSON.stringify({
-        season: season.name,
-        current: season.name === seasons[0].name,
-        fields: ["Prénom", "Nom", "Entreprise", "Email", "Activités"],
-        datas: members,
-    });
-}
+// Lignes de la liste des adhérents, une par adhésion
+// (adhésions remboursées, ou anonymisées par HelloAsso — pas d'adhérent et payeur vide — ignorées)
+const memberRows = (items) => items.filter(isBillable).map((item) => [
+    title(item.user.firstName.trim()),
+    title(item.user.lastName.trim()),
+    item.customFields.find((elt) => elt.name == "Société").answer.toUpperCase(),
+    item.payer.email,
+    (item.options ?? []).map((elt) => elt.name).join(", "),
+]);
+
+// Données de la page des adhérents (acs.json)
+export const MembersData = (items, season = seasons[0]) => JSON.stringify({
+    season: season.name,
+    current: season.name === seasons[0].name,
+    fields: MEMBER_FIELDS,
+    datas: memberRows(items),
+});
 
 // Données de la page d'administration (acs-admin.json) : factures et paramètres d'envoi.
 // Contient l'adresse et le jeton du script d'envoi : ne doit être intégré qu'à la page admin.
@@ -90,3 +87,44 @@ export const AdminData = (items, season = seasons[0], history = []) =>
 export const SeasonSummary = (items) => items.map(buildInvoice).filter(Boolean).map(summarize);
 
 export const GetData = async (season = seasons[0]) => MembersData(await GetItems(season), season);
+
+// Données des saisons archivées (toutes celles de config.json sauf la première), publiées chiffrées dans
+// archives.enc : liste des adhérents (onglet Adhérents de la page admin) et adhésions résumées (statistiques).
+// Une saison terminée ne changeant plus, elles ne sont récupérées sur HelloAsso qu'une fois (voir archives.sh).
+export const ARCHIVE_FILE = "gh-pages/archives.enc";
+// À augmenter quand le contenu change : le cron régénère alors archives.enc
+export const ARCHIVE_VERSION = 1;
+export const archivedSeasons = () => seasons.slice(1).map((season) => season.name);
+
+// seasonsItems : adhésions HelloAsso de chaque saison archivée, de la plus récente à la plus ancienne
+export const ArchiveData = (seasonsItems) => JSON.stringify({
+    version: ARCHIVE_VERSION,
+    fields: MEMBER_FIELDS,
+    seasons: seasons.slice(1).map((season, i) =>
+        ({ season: season.name, members: memberRows(seasonsItems[i]), summaries: SeasonSummary(seasonsItems[i]) })),
+});
+
+// Clé de archives.enc, dérivée du mot de passe de la page admin
+export const archiveKey = () => deriveArchiveKey(cfg.credentials.staticrypt.admin_password);
+
+export const encryptArchiveData = async (data) => encryptArchive(data, await archiveKey());
+
+// Contenu de archives.enc, ou la raison pour laquelle il est à régénérer : absent, chiffré avec une autre clé
+// (mot de passe admin changé), d'une autre version, ou sans toutes les saisons archivées de config.json
+export const readArchive = async () =>
+{
+    if (!fs.existsSync(ARCHIVE_FILE))
+        return { error: `${ARCHIVE_FILE} absent` };
+    let archive;
+    try {
+        archive = JSON.parse(await decryptArchive(fs.readFileSync(ARCHIVE_FILE), await archiveKey()));
+    } catch {
+        return { error: `${ARCHIVE_FILE} ne se déchiffre pas avec le mot de passe admin` };
+    }
+    if (archive.version !== ARCHIVE_VERSION)
+        return { error: `${ARCHIVE_FILE} : version ${archive.version} au lieu de ${ARCHIVE_VERSION}` };
+    const names = archive.seasons.map((season) => season.season);
+    if (names.join() !== archivedSeasons().join())
+        return { error: `${ARCHIVE_FILE} : saisons ${names.join(", ")} au lieu de ${archivedSeasons().join(", ")}` };
+    return { archive };
+}

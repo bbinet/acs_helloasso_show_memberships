@@ -7,8 +7,8 @@ import { GetData } from "./ACSData"
 const initialise=async () =>
 {
     try {
-        const { season, current, fields, datas }=JSON.parse(await GetData());
-        showSeason(season, current);
+        const { season, fields, datas }=JSON.parse(await GetData());
+        showSeason(season);
         // Filtre sur les activités (5e champ), recherche sur le prénom, le nom et l'entreprise
         await showMembersTable(fields, datas,
             { datas:"datas", count:"count", filter:"filter", search:"search", pages:"pages", paginationOptions:"paginationOptions" },

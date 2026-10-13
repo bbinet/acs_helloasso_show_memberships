@@ -1,15 +1,9 @@
-name: Régénération des archives
+name: Régénération des saisons archivées
 
+# Récupère à nouveau sur HelloAsso les saisons archivées et republie archives.enc (voir archives.sh).
+# Rarement utile : cron.yml le fait déjà quand une saison archivée manque ou que le mot de passe admin a changé.
 on:
   workflow_dispatch:
-    inputs:
-      force:
-        description: Publier même si les données n'ont pas changé
-        type: boolean
-        default: false
-  # À chaque mise à jour de master : le script ne publie que si le code des pages a changé
-  push:
-    branches: [master]
 
 permissions:
   contents: write
@@ -26,4 +20,4 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           config-json: ${{ secrets.CONFIG_JSON }}
-      - run: ./archives.sh ${{ inputs.force && '-f' || '' }}
+      - run: ./archives.sh

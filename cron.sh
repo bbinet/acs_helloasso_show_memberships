@@ -8,6 +8,8 @@ cd "$(dirname "$0")"
 # les pages soient aussi republiées quand ils sont modifiés (et pas seulement quand les données changent).
 build_files="src index.html admin vite.config.ts package.json package-lock.json .staticrypt.json"
 
+# Données des saisons archivées (gh-pages/archives.enc), régénérées seulement si besoin
+./archives.sh --if-needed
 npm run acsdata
 hash=$( { cat acs.json acs-admin.json; jq -c .credentials.staticrypt config.json; git ls-files -s $build_files; } | sha256sum | cut -d' ' -f1)
 if [ "$hash" = "$(cat gh-pages/.acs.sha256 2>/dev/null)" ]; then

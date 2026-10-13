@@ -8,7 +8,7 @@ import { season, current, fields, datas } from "../acs.json"
 const initialise=async () =>
 {
     try {
-        showSeason(season, current);
+        showSeason(season);
         showDates(current);
         // Filtre sur les activités (5e champ), recherche sur le prénom, le nom et l'entreprise
         await showMembersTable(fields, datas,

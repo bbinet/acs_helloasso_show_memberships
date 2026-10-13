@@ -35,7 +35,8 @@ configured, `dist/admin/index.html` (invoices, see below).
 
 Les saisons sont déclarées dans `config.json`, de la plus récente à la plus
 ancienne. La première est la saison en cours (publiée à la racine du site), les
-suivantes sont archivées (publiées dans `archives/<saison>/`) :
+suivantes sont archivées : elles ne sont visibles que dans la page
+d'administration (voir ci-dessous) :
 
     {
       "conf": {
@@ -52,31 +53,25 @@ suivantes sont archivées (publiées dans `archives/<saison>/`) :
       "credentials": { ... }
     }
 
-## Régénérer les pages d'archives
-
-    $ npm run archives
-
-Les pages sont générées dans `dist/archives/`. Elles ne sont pas liées depuis la
-page de la saison en cours : la liste des saisons archivées est accessible à
-l'adresse `/archives/`. Pour les régénérer et les publier
-directement sur Github pages :
+## Données des saisons archivées
 
     $ ./archives.sh
 
-Comme pour le cron, rien n'est publié si ni les données HelloAsso des saisons
-archivées ni le code des pages n'ont changé depuis la dernière publication (une
-empreinte est gardée dans `gh-pages/archives/.acs.sha256`). Pour forcer la
-publication :
-
-    $ ./archives.sh -f
+récupère sur HelloAsso les saisons archivées (liste des adhérents, et adhésions
+résumées pour les statistiques) et les publie dans un seul fichier,
+`gh-pages/archives.enc`, chiffré (AES) avec une clé dérivée du mot de passe de
+la page admin : il est public, mais seul le bureau peut le lire. Une saison
+terminée ne changeant plus, ce fichier n'est récupéré sur HelloAsso qu'une fois :
+`cron.sh` lance lui-même `./archives.sh --if-needed`, qui ne le régénère que
+s'il manque, s'il ne contient pas toutes les saisons archivées de `config.json`
+ou s'il ne se déchiffre plus (mot de passe admin changé).
 
 ## Passer à une nouvelle saison
 
 1. Ajouter la nouvelle saison en tête de `conf.seasons` dans `config.json`.
-2. Lancer `./archives.sh` pour publier la page de la saison qui vient de se
-   terminer dans les archives.
-3. La page de la nouvelle saison sera publiée au prochain passage du cron
-   (ou lancer `./cron.sh`).
+2. Au prochain passage du cron (ou en lançant `./cron.sh`), la saison qui vient
+   de se terminer est ajoutée aux données des saisons archivées, et la page de
+   la nouvelle saison est publiée.
 
 # Page d'administration : adhérents, factures et statistiques
 
@@ -113,10 +108,9 @@ la liste, comme dans l'onglet Adhérents), avec :
   par rapport à la saison précédente au même jour de saison, et un graphe par activité.
 
 Les activités et les tarifs sont ceux de HelloAsso : un changement de nom ou une nouvelle activité y apparaît
-automatiquement. Pour les comparaisons, le cron garde un résumé de chaque saison archivée (date, activités, tarif,
-lignes de la facture et montant de chaque adhésion, sans nom ni email) dans `acs-history/`. Une saison terminée
-ne changeant plus, ce résumé n'est récupéré sur HelloAsso qu'une fois, puis conservé d'une exécution à l'autre par
-le cache de GitHub Actions. La page n'appelle jamais HelloAsso : son secret reste dans GitHub Actions.
+automatiquement. Les comparaisons utilisent les données des saisons archivées (voir « Données des saisons
+archivées »), récupérées sur HelloAsso une seule fois. La page n'appelle jamais HelloAsso : son secret reste dans
+GitHub Actions.
 
 Les graphes (Chart.js) et la génération des PDF (pdfmake) sont chargés depuis jsDelivr, avec une empreinte
 d'intégrité, plutôt qu'intégrés à la page chiffrée.
@@ -176,17 +170,16 @@ Deux workflows ont besoin du secret `CONFIG_JSON` contenant tout le fichier
   minutes) : le second lancement de la journée rattrape le premier. Chaque
   lancement planifié réactive aussi le workflow, pour que GitHub ne le désactive
   pas après 60 jours sans activité sur le dépôt (l'été, sans inscription).
-- `archives.yml` exécute `archives.sh` à la demande depuis l'onglet Actions.
-  L'option « Publier même si les données n'ont pas changé » correspond à
-  `./archives.sh -f`.
+- `archives.yml` exécute `archives.sh` à la demande depuis l'onglet Actions, pour
+  récupérer à nouveau les saisons archivées : rarement utile, `cron.sh` le fait
+  déjà quand il le faut.
 
-Les deux workflows sont aussi lancés à chaque mise à jour de `master`, pour
-publier tout de suite une modification du code des pages (fichiers listés dans
-`build_files` dans `cron.sh` et `archives.sh`).
+`cron.yml` est aussi lancé à chaque mise à jour de `master`, pour publier tout de
+suite une modification du code des pages (fichiers listés dans `build_files`
+dans `cron.sh`).
 
-Les scripts ne publient que si les données ou le code des pages ont changé : une
-empreinte de ce qui est publié est gardée dans `gh-pages/.acs.sha256` et
-`gh-pages/archives/.acs.sha256`.
+`cron.sh` ne publie que si les données ou le code des pages ont changé : une
+empreinte de ce qui est publié est gardée dans `gh-pages/.acs.sha256`.
 
 La mise en ligne du site après chaque publication sur `gh-pages` est ensuite
 faite par le workflow `pages-build-deployment` de GitHub Pages.
