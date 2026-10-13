@@ -200,4 +200,6 @@ faite par le workflow `pages-build-deployment` de GitHub Pages.
   serait téléchargé qu'à l'ouverture de l'onglet Statistiques. À tester : le fichier chiffré se déchiffre avec
   la clé, et pas avec une autre.
 - **Factures** : télécharger toutes les factures sélectionnées en une seule archive ZIP.
-- **Page admin sur téléphone** : adapter la mise en page des onglets et des tableaux aux petits écrans.
+- **Page admin sur téléphone** : les filtres, les boutons, les statistiques et la liste des adhérents s'adaptent
+  déjà aux petits écrans, mais le tableau des factures déborde encore (une présentation en fiches, comme la liste
+  des adhérents, serait plus lisible).
