@@ -169,9 +169,13 @@ Deux workflows ont besoin du secret `CONFIG_JSON` contenant tout le fichier
 `config.json` (Settings > Secrets and variables > Actions), et `cron.yml` du secret facultatif
 `INVOICE_SIGNATURE` (signature des factures, voir ci-dessus) :
 
-- `cron.yml` exécute `cron.sh` tous les jours à 10h00 UTC (11h00 à Paris en heure
-  d'hiver, 12h00 en heure d'été), et à la demande depuis l'onglet Actions
-  (« Run workflow »).
+- `cron.yml` exécute `cron.sh` deux fois par jour, à 6h23 et 9h48 UTC (7h23 et
+  10h48 à Paris en heure d'hiver, 8h23 et 11h48 en heure d'été), et à la demande
+  depuis l'onglet Actions (« Run workflow »). GitHub peut retarder de plusieurs
+  heures, voire sauter, un lancement planifié (surtout aux heures pile, d'où ces
+  minutes) : le second lancement de la journée rattrape le premier. Chaque
+  lancement planifié réactive aussi le workflow, pour que GitHub ne le désactive
+  pas après 60 jours sans activité sur le dépôt (l'été, sans inscription).
 - `archives.yml` exécute `archives.sh` à la demande depuis l'onglet Actions.
   L'option « Publier même si les données n'ont pas changé » correspond à
   `./archives.sh -f`.
@@ -195,7 +199,5 @@ faite par le workflow `pages-build-deployment` de GitHub Pages.
   dans la page admin, elle-même chiffrée par le mot de passe admin : seul le bureau pourrait le lire, et il ne
   serait téléchargé qu'à l'ouverture de l'onglet Statistiques. À tester : le fichier chiffré se déchiffre avec
   la clé, et pas avec une autre.
-- **Planification du cron** : décaler l'heure de lancement de l'heure pile (souvent retardée par GitHub), et
-  éviter que GitHub désactive les workflows planifiés après 60 jours sans activité sur le dépôt.
 - **Factures** : télécharger toutes les factures sélectionnées en une seule archive ZIP.
 - **Page admin sur téléphone** : adapter la mise en page des onglets et des tableaux aux petits écrans.

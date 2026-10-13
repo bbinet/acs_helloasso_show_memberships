@@ -2,7 +2,11 @@ name: Mise à jour de la saison en cours
 
 on:
   schedule:
-    - cron: "0 10 * * *"  # 10h00 UTC : 11h00 à Paris en heure d'hiver, 12h00 en heure d'été
+    # Deux fois par jour, à des minutes peu demandées : GitHub retarde de plusieurs heures, voire saute, les
+    # lancements planifiés aux heures pile ; si l'un est en retard ou sauté, l'autre rattrape.
+    # 6h23 et 9h48 UTC : 7h23 et 10h48 à Paris en heure d'hiver, 8h23 et 11h48 en heure d'été
+    - cron: "23 6 * * *"
+    - cron: "48 9 * * *"
   workflow_dispatch:
   # À chaque mise à jour de master : le script ne publie que si le code des pages a changé
   push:
@@ -10,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  actions: write  # réactivation du workflow, voir la dernière étape
 
 # Ne jamais lancer deux publications en même temps sur gh-pages
 concurrency:
@@ -32,3 +37,11 @@ jobs:
           key: acs-history-${{ github.run_id }}
           restore-keys: acs-history-
       - run: ./cron.sh
+      # Dépôt public : GitHub désactive les workflows planifiés après 60 jours sans activité sur le dépôt (par
+      # exemple l'été, sans nouvelle inscription, donc sans publication). Réactiver ce workflow à chaque lancement
+      # planifié remet ce délai à zéro, même si la mise à jour a échoué.
+      - name: Garder le lancement planifié actif
+        if: always() && github.event_name == 'schedule'
+        run: gh api --method PUT "repos/${{ github.repository }}/actions/workflows/cron.yml/enable"
+        env:
+          GH_TOKEN: ${{ github.token }}
