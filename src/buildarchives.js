@@ -21,4 +21,6 @@ const archived = seasons.slice(1);
 console.log(`Récupération sur HelloAsso des saisons ${archived.map((season) => season.name).join(", ")}...`);
 const data = ArchiveData(await Promise.all(archived.map((season) => GetItems(season))));
 fs.writeFileSync(OUTPUT, await encryptArchiveData(data));
+// Copie en clair, non publiée, pour le serveur de développement (npm run dev)
+fs.writeFileSync("acs-archives.json", data);
 console.log(`Données des saisons archivées chiffrées dans ${OUTPUT}.`);

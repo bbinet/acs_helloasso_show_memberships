@@ -3,6 +3,7 @@
 import { build } from "vite";
 import { execFileSync } from "child_process";
 import cfg from "../config.json" with { type: "json" };
+import { archiveKey } from "./ACSData.js";
 
 const password = cfg.credentials.staticrypt.admin_password;
 if (!password) {
@@ -13,6 +14,8 @@ if (!password) {
 await build({
     logLevel: "warn",
     publicDir: false,
+    // Clé de déchiffrement des données des saisons archivées (archives.enc), intégrée à la page chiffrée
+    define: { __ARCHIVES_KEY__: JSON.stringify(await archiveKey()) },
     build: { outDir: "dist", emptyOutDir: false, rollupOptions: { input: "admin/index.html" } },
 });
 execFileSync("node_modules/.bin/staticrypt", [

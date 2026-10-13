@@ -10,19 +10,19 @@ import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
 import { emailList, toCsv, uniqueByEmail } from "./Export";
 import { loadCharts, renderActivityStats, renderSeasonsStats, renderStats, type SeasonMembers } from "./AdminStats";
+import { loadArchive } from "./Archives";
 import { showMembersTable } from "./MembersTable";
 import { escape, euros, frenchDate, parisTime } from "./format";
 import adminData from "../acs-admin.json"
 // Liste de la page des adhérents, reprise telle quelle par l'onglet « Adhérents »
 import { fields as memberFields, datas as memberDatas } from "../acs.json"
 
-const { season, invoices, issuer, signature, service: serviceConfig, history } = adminData as {
+const { season, invoices, issuer, signature, service: serviceConfig } = adminData as {
     season: string;
     invoices: Invoice[];
     issuer: Issuer;
     signature: string | null;
     service: { url: string; token: string } | null;
-    history?: SeasonMembers[];
 };
 const settings = { issuer, signature };
 const service = serviceConfig ? new InvoiceService(serviceConfig.url, serviceConfig.token, season) : null;
@@ -269,24 +269,32 @@ fillSelect("activity", [...[...new Set(invoices.flatMap((invoice) => invoice.act
 fillSelect("formula", [...new Set(invoices.map((invoice) => invoice.formula))].sort((a, b) => a.localeCompare(b, "fr")));
 
 // Sous-onglets des statistiques (bilan de saison, comparaison des saisons, comparaison des saisons par activité) :
-// les statistiques sont calculées à l'affichage, avec les derniers statuts d'envoi
-// Toutes les saisons, de la plus récente (en cours) à la plus ancienne
-const seasons: SeasonMembers[] = [{ season, members: invoices }, ...(history ?? [])];
-const statsViews: Record<string, (container: HTMLElement) => void> = {
-    season: (container) => renderStats(container, seasons, invoices, statuses),
-    seasons: (container) => renderSeasonsStats(container, seasons),
-    activities: (container) => renderActivityStats(container, seasons),
+// les statistiques sont calculées à l'affichage, avec les derniers statuts d'envoi.
+// seasons : toutes les saisons, de la plus récente (en cours) à la plus ancienne
+const statsViews: Record<string, (container: HTMLElement, seasons: SeasonMembers[]) => void> = {
+    season: (container, seasons) => renderStats(container, seasons, invoices, statuses),
+    seasons: (container, seasons) => renderSeasonsStats(container, seasons),
+    activities: (container, seasons) => renderActivityStats(container, seasons),
 };
 let statsView = "season";
 const showStats = async () => {
     document.querySelectorAll<HTMLButtonElement>("nav.subtabs button").forEach((button) =>
         button.setAttribute("aria-selected", String(button.dataset.view === statsView)));
     const container = element("stats");
-    const error = await loadCharts().then(() => null, (e: Error) => e);
-    statsViews[statsView](container);
-    if (error) {
+    container.innerHTML = `<p>Chargement des statistiques et des saisons précédentes...</p>`;
+    // Graphes, et saisons archivées (téléchargées à la première ouverture) : sans elles, la saison en cours seule
+    const errors: string[] = [];
+    await loadCharts().catch((e: Error) => errors.push(`Graphes indisponibles : ${e.message}`));
+    const history = await loadArchive().then(
+        (archive) => archive.seasons.map(({ season: name, summaries }) => ({ season: name, members: summaries })),
+        (e: Error) => {
+            errors.push(`Saisons précédentes indisponibles : ${e.message}`);
+            return [];
+        });
+    statsViews[statsView](container, [{ season, members: invoices }, ...history]);
+    for (const error of errors.reverse()) {
         console.error(error);
-        container.insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">Graphes indisponibles : ${escape(error.message)}</p>`);
+        container.insertAdjacentHTML("afterbegin", `<p class="alert alert-danger">${escape(error)}</p>`);
     }
 };
 document.querySelectorAll<HTMLButtonElement>("nav.subtabs button").forEach((button) =>

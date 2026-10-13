@@ -60,7 +60,10 @@ d'administration (voir ci-dessous) :
 récupère sur HelloAsso les saisons archivées (liste des adhérents, et adhésions
 résumées pour les statistiques) et les publie dans un seul fichier,
 `gh-pages/archives.enc`, chiffré (AES) avec une clé dérivée du mot de passe de
-la page admin : il est public, mais seul le bureau peut le lire. Une saison
+la page admin : il est public, mais seul le bureau peut le lire. La page admin,
+qui contient la clé, ne le télécharge qu'à l'ouverture de l'onglet Statistiques :
+elle reste légère, quel que soit le nombre de saisons archivées. Une copie en
+clair, `acs-archives.json` (non publiée), sert au serveur de développement. Une saison
 terminée ne changeant plus, ce fichier n'est récupéré sur HelloAsso qu'une fois :
 `cron.sh` lance lui-même `./archives.sh --if-needed`, qui ne le régénère que
 s'il manque, s'il ne contient pas toutes les saisons archivées de `config.json`
@@ -186,12 +189,6 @@ faite par le workflow `pages-build-deployment` de GitHub Pages.
 
 # Évolutions envisagées
 
-- **Charger les saisons archivées seulement quand on en a besoin** : leurs résumés (environ 65 Ko par saison)
-  sont aujourd'hui intégrés à la page admin, et alourdissent chacun de ses chargements. Ils pourraient être
-  publiés dans un fichier à part de `admin/`, chiffré à chaque construction (AES) avec une clé aléatoire placée
-  dans la page admin, elle-même chiffrée par le mot de passe admin : seul le bureau pourrait le lire, et il ne
-  serait téléchargé qu'à l'ouverture de l'onglet Statistiques. À tester : le fichier chiffré se déchiffre avec
-  la clé, et pas avec une autre.
 - **Factures** : télécharger toutes les factures sélectionnées en une seule archive ZIP.
 - **Page admin sur téléphone** : les filtres, les boutons, les statistiques et la liste des adhérents s'adaptent
   déjà aux petits écrans, mais le tableau des factures déborde encore (une présentation en fiches, comme la liste

@@ -62,8 +62,8 @@ export const MembersData = (items, season = seasons[0]) => JSON.stringify({
 
 // Données de la page d'administration (acs-admin.json) : factures et paramètres d'envoi.
 // Contient l'adresse et le jeton du script d'envoi : ne doit être intégré qu'à la page admin.
-// history : adhésions résumées des saisons archivées, [{ season, members }], pour les comparer à la saison en cours
-export const AdminData = (items, season = seasons[0], history = []) =>
+// Les saisons archivées n'y sont pas : la page les télécharge quand elle en a besoin (archives.enc)
+export const AdminData = (items, season = seasons[0]) =>
 {
     const invoicing = cfg.conf.invoicing ?? {};
     const credentials = cfg.credentials.invoicing ?? {};
@@ -79,7 +79,6 @@ export const AdminData = (items, season = seasons[0], history = []) =>
         // Image de la signature : fichier signature.png, s'il existe (secret INVOICE_SIGNATURE dans GitHub Actions)
         signature: fs.existsSync("signature.png") ? `data:image/png;base64,${fs.readFileSync("signature.png").toString("base64")}` : null,
         service: credentials.script_url ? { url: credentials.script_url, token: credentials.token } : null,
-        history,
     });
 }
 
