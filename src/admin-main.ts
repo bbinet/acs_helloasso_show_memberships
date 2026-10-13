@@ -17,12 +17,13 @@ import adminData from "../acs-admin.json"
 // Liste de la page des adhérents, reprise telle quelle par l'onglet « Adhérents »
 import { fields as memberFields, datas as memberDatas } from "../acs.json"
 
-const { season, invoices, issuer, signature, service: serviceConfig } = adminData as {
+const { season, invoices, issuer, signature, service: serviceConfig, archivedSeasons } = adminData as {
     season: string;
     invoices: Invoice[];
     issuer: Issuer;
     signature: string | null;
     service: { url: string; token: string } | null;
+    archivedSeasons?: string[]; // de la plus récente à la plus ancienne
 };
 const settings = { issuer, signature };
 const service = serviceConfig ? new InvoiceService(serviceConfig.url, serviceConfig.token, season) : null;
@@ -316,16 +317,39 @@ const showTab = (tab: string) => {
 document.querySelectorAll<HTMLButtonElement>("nav.tabs button").forEach((button) =>
     button.addEventListener("click", () => showTab(button.dataset.tab!)));
 
+// Onglet « Adhérents » : la même liste que la page des adhérents, pour la saison en cours ou, au choix, pour une
+// saison archivée (téléchargée à la première demande, voir Archives.ts)
+const memberSeasons = [season, ...(archivedSeasons ?? [])];
+const showMembers = async (shown: string) => {
+    element("m-seasons").innerHTML = `<span>Saison :</span>` + memberSeasons.map((name, i) =>
+        `<button data-season="${escape(name)}" aria-pressed="${name === shown}">${escape(name)}${i === 0 ? " (en cours)" : ""}</button>`).join("");
+    try {
+        let fields = memberFields, datas = memberDatas;
+        if (shown !== season) {
+            element("m-datas").innerHTML = `<p>Chargement de la saison ${escape(shown)}...</p>`;
+            const archive = await loadArchive();
+            const archived = archive.seasons.find((s) => s.season === shown);
+            if (!archived)
+                throw new Error(`saison ${shown} absente des saisons archivées`);
+            [fields, datas] = [archive.fields, archived.members];
+        }
+        await showMembersTable(fields, datas,
+            { datas: "m-datas", count: "m-count", filter: "m-filter", search: "m-search", pages: "m-pages", paginationOptions: "m-paginationOptions" },
+            { activitiesField: 4, searchFields: [0, 1, 2] });
+    } catch (e) {
+        console.error(e);
+        element("m-datas").innerHTML = `<div class="alert alert-warning">La liste ne peut pas être affichée : ${escape((e as Error).message)}</div>`;
+    }
+};
+element("m-seasons").addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-season]");
+    if (button)
+        showMembers(button.dataset.season!);
+});
+
 const initialise = async () => {
     element("season").textContent = season;
-    // Onglet « Adhérents » : la même liste que la page des adhérents
-    showMembersTable(memberFields, memberDatas,
-        { datas: "m-datas", count: "m-count", filter: "m-filter", search: "m-search", pages: "m-pages", paginationOptions: "m-paginationOptions" },
-        { activitiesField: 4, searchFields: [0, 1, 2] },
-    ).catch((e) => {
-        console.error(e);
-        element("m-datas").innerHTML = `<div class="alert alert-warning">Problème technique : la liste ne peut pas être affichée.</div>`;
-    });
+    showMembers(season);
     showDates(true);
     render();
     // Chargé en avance, pour que le premier aperçu soit rapide ; une erreur sera signalée à l'usage

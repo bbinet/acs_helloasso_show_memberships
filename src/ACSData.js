@@ -79,6 +79,8 @@ export const AdminData = (items, season = seasons[0]) =>
         // Image de la signature : fichier signature.png, s'il existe (secret INVOICE_SIGNATURE dans GitHub Actions)
         signature: fs.existsSync("signature.png") ? `data:image/png;base64,${fs.readFileSync("signature.png").toString("base64")}` : null,
         service: credentials.script_url ? { url: credentials.script_url, token: credentials.token } : null,
+        // Noms des saisons archivées, pour les proposer avant d'avoir téléchargé leurs données
+        archivedSeasons: archivedSeasons(),
     });
 }
 

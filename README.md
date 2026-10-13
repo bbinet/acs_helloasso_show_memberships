@@ -61,7 +61,8 @@ récupère sur HelloAsso les saisons archivées (liste des adhérents, et adhés
 résumées pour les statistiques) et les publie dans un seul fichier,
 `gh-pages/archives.enc`, chiffré (AES) avec une clé dérivée du mot de passe de
 la page admin : il est public, mais seul le bureau peut le lire. La page admin,
-qui contient la clé, ne le télécharge qu'à l'ouverture de l'onglet Statistiques :
+qui contient la clé, ne le télécharge qu'à l'ouverture de l'onglet Statistiques
+ou au choix d'une saison archivée dans l'onglet Adhérents :
 elle reste légère, quel que soit le nombre de saisons archivées. Une copie en
 clair, `acs-archives.json` (non publiée), sert au serveur de développement. Une saison
 terminée ne changeant plus, ce fichier n'est récupéré sur HelloAsso qu'une fois :
@@ -82,7 +83,8 @@ La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, diff
 adhérents, qui ne change pas. Elle a trois onglets.
 
 **Adhérents** (onglet ouvert par défaut) : la même liste que la page des adhérents, avec le filtre par activité,
-la recherche et le tri.
+la recherche et le tri, pour la saison en cours ou, au choix, pour une saison archivée (téléchargée au premier
+choix, voir « Données des saisons archivées »).
 
 **Factures et exports** : la liste des adhésions de la saison en cours (une par adhésion non remboursée), avec le
 téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par page (choix et pages en bas de
