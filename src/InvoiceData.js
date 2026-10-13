@@ -21,13 +21,19 @@ export function isBillable(item) {
     return Boolean(item.user) && !(item.payments && item.payments[0].refundOperations.length > 0);
 }
 
+// Options choisies, sans l'option « N'oubliez pas ... », qui n'est qu'un rappel, ni une activité ni une prestation
+const activityOptions = (item) => (item.options ?? []).filter((option) => !option.name.includes("oubliez pas"));
+
+/** Activités choisies (noms des options HelloAsso), par exemple pour la liste des adhérents */
+export const activityNames = (item) => activityOptions(item).map((option) => option.name);
+
 /** @returns {Invoice | null} */
 export function buildInvoice(item) {
     if (!isBillable(item))
         return null;
     const answer = (name) => (item.customFields ?? []).find((field) => field.name == name)?.answer ?? "";
-    // Montants HelloAsso en centimes. L'option « N'oubliez pas ... » n'est qu'un rappel, pas une prestation.
-    const options = (item.options ?? []).filter((option) => !option.name.includes("oubliez pas"));
+    // Montants HelloAsso en centimes
+    const options = activityOptions(item);
     const lines = [{ label: item.name, cents: item.amount }]
         .concat(options.map((option) => ({ label: option.name, cents: option.amount ?? 0 })));
     return {

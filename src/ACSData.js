@@ -1,7 +1,7 @@
 import { ApiV5Client as HelloAsso } from "helloasso";
 import cfg from "../config.json" with { type: "json" };
 import fs from "fs";
-import { buildInvoice, isBillable, summarize } from "./InvoiceData.js";
+import { activityNames, buildInvoice, isBillable, summarize } from "./InvoiceData.js";
 import { decryptArchive, deriveArchiveKey, encryptArchive } from "./ArchiveCrypto.js";
 
 function title(str) {
@@ -49,7 +49,7 @@ const memberRows = (items) => items.filter(isBillable).map((item) => [
     title(item.user.lastName.trim()),
     item.customFields.find((elt) => elt.name == "Société").answer.toUpperCase(),
     item.payer.email,
-    (item.options ?? []).map((elt) => elt.name).join(", "),
+    activityNames(item).join(", "),
 ]);
 
 // Données de la page des adhérents (acs.json)
@@ -94,7 +94,8 @@ export const GetData = async (season = seasons[0]) => MembersData(await GetItems
 // Une saison terminée ne changeant plus, elles ne sont récupérées sur HelloAsso qu'une fois (voir archives.sh).
 export const ARCHIVE_FILE = "gh-pages/archives.enc";
 // À augmenter quand le contenu change : le cron régénère alors archives.enc
-export const ARCHIVE_VERSION = 1;
+// (2 : sans l'option « N'oubliez pas ... » dans les activités des adhérents)
+export const ARCHIVE_VERSION = 2;
 export const archivedSeasons = () => seasons.slice(1).map((season) => season.name);
 
 // seasonsItems : adhésions HelloAsso de chaque saison archivée, de la plus récente à la plus ancienne

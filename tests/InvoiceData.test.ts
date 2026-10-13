@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildInvoice, summarize } from "../src/InvoiceData.js";
+import { activityNames, buildInvoice, summarize } from "../src/InvoiceData.js";
 
 // Adhésion telle que renvoyée par l'API HelloAsso (/forms/.../items?withDetails=true)
 const item = () => ({
@@ -75,6 +75,14 @@ describe("buildInvoice", () => {
         expect(buildInvoice({ ...item(), customFields: [{ name: "Société", answer: "X" }] })!.phone).toBe("");
     });
 
+});
+
+describe("activityNames", () => {
+    it("donne les activités choisies (liste des adhérents), sans l'option de rappel « N'oubliez pas ... »", () => {
+        expect(activityNames(item())).toEqual(["Football", "Tennis"]);
+        expect(activityNames({ ...item(), options: [{ name: "N'oubliez pas de sélectionner vos activités ci-dessous", amount: 0 }] })).toEqual([]);
+        expect(activityNames({ ...item(), options: undefined })).toEqual([]);
+    });
 });
 
 describe("summarize", () => {
