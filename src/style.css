@@ -32,9 +32,10 @@ input.search { width:100%; }
 .pagination button { margin:0.2rem; }
 /* Factures et exports : à gauche la recherche et la période d'inscription, à droite les filtres */
 .filters { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); gap:0.6rem 2rem; margin:1rem 0; }
-/* En dessous : les boutons de sélection à gauche, les actions (envoi, exports) à droite */
-.actions { display:flex; flex-wrap:wrap; justify-content:space-between; gap:0.6rem 2rem; margin:1rem 0; }
-.action-block { display:flex; flex-wrap:wrap; gap:0.5rem; }
+/* En dessous : les boutons de sélection, puis « Sélection (n) : » et les actions sur la sélection (envoi, exports) */
+.actions { display:flex; flex-wrap:wrap; align-items:center; gap:0.6rem 2rem; margin:1rem 0; }
+.selection-label { font-weight:bold; white-space:nowrap; }
+.action-block { display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; }
 .action-block button { margin:0; }
 /* Deux champs par ligne, ou un seul sur les petits écrans */
 .filter-block { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap:0.6rem 1rem; align-content:start; }
@@ -49,6 +50,8 @@ input.search { width:100%; }
 td.invoice-actions { white-space:nowrap; }
 .icon-button { padding:0.3rem 0.45rem; margin:0 0.1rem; line-height:0; }
 svg.icon { width:1.15rem; height:1.15rem; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+/* Icône devant le texte des boutons des factures sélectionnées */
+.action-block svg.icon { vertical-align:-0.2em; margin-right:0.2rem; }
 /* Page admin : onglets */
 nav.tabs { display:flex; gap:0.5rem; margin:1rem 0; border-bottom:2px solid #41403e; }
 nav.tabs button { border-bottom:none; border-radius:15px 15px 0 0; margin-bottom:-2px; }

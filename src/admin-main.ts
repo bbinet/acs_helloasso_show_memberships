@@ -44,15 +44,17 @@ const statusCell = (invoice: Invoice) => {
     return `<span class="badge ${badge}">${escape(status.status)}</span><br/><small>le ${frenchDate(status.date)}</small>${detail}`;
 };
 
-// Icônes des boutons de chaque facture (traits de 24 × 24, couleur du texte)
+// Icônes des boutons (traits de 24 × 24, couleur du texte) : de chaque facture, et des factures sélectionnées
 const ICON_PATHS = {
     preview: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     download: '<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>',
     send: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+    csv: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M8 12h8M8 16h8M12 10v8"/>',
+    copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
 };
 const icon = (name: keyof typeof ICON_PATHS) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
 // Bouton d'icône ; « highlighted » (en bleu) pour l'envoi d'une facture jamais envoyée
-const iconButton = (action: keyof typeof ICON_PATHS, id: number, label: string, { highlighted = false, disabled = false } = {}) =>
+const iconButton = (action: "preview" | "download" | "send", id: number, label: string, { highlighted = false, disabled = false } = {}) =>
     `<button class="btn-small icon-button${highlighted ? " btn-secondary" : ""}" data-action="${action}" data-id="${id}" title="${escape(label)}" aria-label="${escape(label)}" ${disabled ? "disabled" : ""}>${icon(action)}</button>`;
 
 const value = (id: string) => element<HTMLInputElement | HTMLSelectElement>(id).value;
@@ -103,7 +105,7 @@ const render = () => {
         <table class="table-hover">
           <thead><tr>
             <th class="select"><input type="checkbox" data-select="page" title="Sélectionner les factures de la page" ${pageSelected ? "checked" : ""}/></th>
-            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email / téléphone</th><th>Activités</th><th>Montant</th><th>Envoi par email</th><th>Facture</th>
+            <th>N°</th><th>Payée le</th><th>Adhérent</th><th>Email / téléphone</th><th>Activités</th><th>Montant</th><th>Facture</th><th></th>
           </tr></thead>
           <tbody>${rows.join("")}</tbody>
         </table>`;
@@ -111,12 +113,23 @@ const render = () => {
     element("count").textContent = `${filtered.length}${range}`;
     renderPages(pageCount);
 
-    const sendSelected = element<HTMLButtonElement>("sendSelected");
-    sendSelected.textContent = `Envoyer par email les factures sélectionnées (${selected.size})`;
-    sendSelected.disabled = !service || sending || selected.size === 0;
+    // Boutons des factures sélectionnées, avec leur icône et leur nombre
+    for (const [id, iconName, label, disabled] of [
+        ["sendSelected", "send", "Envoyer les factures", !service || sending],
+        ["exportCsv", "csv", "Exporter en CSV", false],
+        ["copyEmails", "copy", "Copier les emails", false],
+    ] as const) {
+        const button = element<HTMLButtonElement>(id);
+        button.innerHTML = `${icon(iconName)} ${label}`;
+        button.disabled = disabled || selected.size === 0;
+    }
+    element("selectionLabel").textContent = `Sélection (${selected.size}) :`;
     element<HTMLButtonElement>("selectAll").textContent = `Tout sélectionner (${filtered.length})`;
     element<HTMLButtonElement>("selectNone").disabled = selected.size === 0;
 };
+
+// Factures sélectionnées (toutes pages et tous filtres confondus) : envoi par email, export CSV, copie des emails
+const selectedInvoices = () => invoices.filter((invoice) => selected.has(invoice.id));
 
 const findInvoice = (id: string | undefined) => invoices.find((invoice) => String(invoice.id) === id);
 
@@ -193,7 +206,7 @@ const sendBatch = async (batch: Invoice[]) => {
 };
 
 element("sendSelected").addEventListener("click", async () => {
-    const batch = invoices.filter((invoice) => selected.has(invoice.id));
+    const batch = selectedInvoices();
     const resent = batch.filter((invoice) => statuses[invoice.id]).length;
     // Avertissement en tête si des factures déjà envoyées font partie de la sélection
     const warning = resent === 1 ? `⚠ 1 des ${batch.length} factures sélectionnées a déjà été envoyée : elle sera renvoyée.`
@@ -240,9 +253,9 @@ for (const [id, type] of [["search", "input"], ["filter", "change"], ["activity"
                           ["from", "change"], ["to", "change"], ["pageSize", "change"]])
     element(id).addEventListener(type, () => { page = 1; render(); });
 
-// Exports de la liste filtrée (toutes les pages)
+// Exports des factures sélectionnées
 element("exportCsv").addEventListener("click", () => {
-    const blob = new Blob([toCsv(filteredInvoices(), statuses)], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([toCsv(selectedInvoices(), statuses)], { type: "text/csv;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `adherents-acs-${season}.csv`;
@@ -251,7 +264,7 @@ element("exportCsv").addEventListener("click", () => {
 });
 
 element("copyEmails").addEventListener("click", async () => {
-    const list = filteredInvoices();
+    const list = selectedInvoices();
     const emails = emailList(list);
     const count = uniqueByEmail(list).length;
     try {

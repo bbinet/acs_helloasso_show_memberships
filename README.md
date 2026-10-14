@@ -92,7 +92,8 @@ la liste, comme dans l'onglet Adhérents), avec :
 
 - une recherche (nom, entreprise, email, n°) et des filtres par activité, tarif, période d'inscription et
   statut d'envoi de la facture ;
-- l'export CSV de la liste filtrée (pour Excel) et la copie des emails de la liste filtrée, au format
+- l'export CSV (pour Excel) et la copie des emails des adhésions sélectionnées (par exemple toutes celles d'un
+  filtre, avec « Tout sélectionner »), au format
   `"Prénom Nom" <email>`, à coller dans un mail ;
 - pour chaque adhésion, la facture en PDF, générée dans le navigateur (modèle repris de
   `acs_helloasso_invoicing`), à voir, télécharger ou envoyer par email ; l'envoi groupé des factures
