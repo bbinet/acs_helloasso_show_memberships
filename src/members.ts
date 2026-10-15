@@ -68,11 +68,9 @@ const seasonName = seasonDir({ name: options.season ?? seasons[0].name });
 const season = seasons.find((s: { name: string }) => seasonDir(s) === seasonName)
     ?? fail(`Saison inconnue : ${options.season} (saisons de config.json : ${seasons.map(seasonDir).join(", ")})`);
 
-// Traces de la bibliothèque helloasso : avertissements seulement, sur la sortie d'erreur
-const warningsOnStderr = () => ({ warn: console.error });
 let members: Invoice[];
 try {
-    const invoices = (await GetItems(season, warningsOnStderr)).map(buildInvoice).filter(Boolean) as Invoice[];
+    const invoices = (await GetItems(season)).map(buildInvoice).filter(Boolean) as Invoice[];
     members = selectMembers(invoices, options);
 } catch (error) {
     console.error((error as Error).message);

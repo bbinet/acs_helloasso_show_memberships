@@ -1,4 +1,3 @@
-import { ApiV5Client as HelloAsso } from "helloasso";
 import cfg from "../config.json" with { type: "json" };
 import fs from "fs";
 import { activityNames, buildInvoice, isBillable, summarize, title } from "./InvoiceData.js";
@@ -11,30 +10,39 @@ export const seasons = cfg.conf.seasons;
 // Nom du répertoire d'archive d'une saison : "2025/2026" => "2025-2026"
 export const seasonDir = (season) => season.name.replace(/\//g, "-");
 
-// Adhésions de la saison, telles que renvoyées par l'API HelloAsso
-// (logger : traces de la bibliothèque helloasso, sur la sortie standard par défaut)
-/** @param {any} [logger] */
-export const GetItems = async (season = seasons[0], logger) =>
+// Appel à l'API HelloAsso (https://api.helloasso.com par exemple), avec une erreur explicite si elle refuse
+const helloAssoFetch = async (path, init) =>
 {
-    const helloAsso = new HelloAsso({
-        apiBase: cfg.conf.helloasso.api_base,
-        clientId: cfg.credentials.helloasso.id,
-        clientSecret:cfg.credentials.helloasso.secret,
-        logger,
-    });
-    let payload = {
-        withDetails: "true",
-        pageSize: 100
-    };
-    let items = [];
+    const resp = await fetch(`https://${cfg.conf.helloasso.api_base}${path}`, init);
+    if (!resp.ok)
+        throw new Error(`HelloAsso a répondu ${resp.status} ${resp.statusText} pour ${path.split("?")[0]}`);
+    return resp.json();
+}
+
+// Jeton d'accès OAuth2, avec les identifiants client de config.json
+const helloAssoToken = async () => (await helloAssoFetch("/oauth2/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: cfg.credentials.helloasso.id,
+        client_secret: cfg.credentials.helloasso.secret,
+    }),
+})).access_token;
+
+// Adhésions de la saison, telles que renvoyées par l'API HelloAsso (par pages de 100)
+export const GetItems = async (season = seasons[0]) =>
+{
+    const headers = { authorization: `Bearer ${await helloAssoToken()}` };
+    const { organization_name, formType } = cfg.conf.helloasso;
+    const payload = { withDetails: "true", pageSize: 100 };
+    const items = [];
     while (true) {
-        const resp = await helloAsso.call(`/v5/organizations/${cfg.conf.helloasso.organization_name}/forms/${cfg.conf.helloasso.formType}/${season.formSlug}/items?${new URLSearchParams(payload)}`);
-        const resp_json = await resp.json();
-        if (!resp_json.data || resp_json.data.length <= 0) {
+        const page = await helloAssoFetch(`/v5/organizations/${organization_name}/forms/${formType}/${season.formSlug}/items?${new URLSearchParams(payload)}`, { headers });
+        if (!page.data || page.data.length <= 0)
             break;
-        }
-        payload.continuationtoken = resp_json.pagination.continuationToken;
-        items.push(...resp_json.data);
+        payload.continuationtoken = page.pagination.continuationToken;
+        items.push(...page.data);
     }
     return items;
 }
