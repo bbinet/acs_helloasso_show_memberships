@@ -169,13 +169,12 @@ Deux workflows ont besoin du secret `CONFIG_JSON` contenant tout le fichier
 `config.json` (Settings > Secrets and variables > Actions), et `cron.yml` du secret facultatif
 `INVOICE_SIGNATURE` (signature des factures, voir ci-dessus) :
 
-- `cron.yml` exécute `cron.sh` deux fois par jour, à 6h23 et 9h48 UTC (7h23 et
-  10h48 à Paris en heure d'hiver, 8h23 et 11h48 en heure d'été), et à la demande
-  depuis l'onglet Actions (« Run workflow »). GitHub peut retarder de plusieurs
-  heures, voire sauter, un lancement planifié (surtout aux heures pile, d'où ces
-  minutes) : le second lancement de la journée rattrape le premier. Chaque
-  lancement planifié réactive aussi le workflow, pour que GitHub ne le désactive
-  pas après 60 jours sans activité sur le dépôt (l'été, sans inscription).
+- `cron.yml` exécute `cron.sh` deux fois par jour, à 8h23 et 11h48, et à la
+  demande depuis l'onglet Actions (« Run workflow »). GitHub peut retarder de
+  plusieurs heures (voire sauter) un lancement planifié (surtout aux heures de
+  pointe) : le second lancement de la journée rattrape le premier. Chaque
+  lancement planifié réactive aussi le workflow, pour que GitHub ne le
+  désactive pas après 60 jours sans activité sur le dépôt.
 - `archives.yml` exécute `archives.sh` à la demande depuis l'onglet Actions, pour
   récupérer à nouveau les saisons archivées : rarement utile, `cron.sh` le fait
   déjà quand il le faut.
