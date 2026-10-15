@@ -2,6 +2,9 @@
 // utilisée par la page des adhérents et par l'onglet « Adhérents » de la page admin.
 // Une seule liste par page : FreeDatas2HTML donne des identifiants fixes à ses champs de recherche et de pagination.
 import { FreeDatas2HTML, Pagination, Render, SearchEngine, Selector, SortingField } from "./FreeDatas2HTML";
+import { copyEmails } from "./CopyEmails";
+import { memberContacts } from "./Export";
+import { icon } from "./Icons";
 
 // Identifiants des éléments de la page qui reçoivent la liste et ses outils
 export interface MembersTableElements {
@@ -11,6 +14,8 @@ export interface MembersTableElements {
     search: string;
     pages: string;
     paginationOptions: string;
+    copyEmails: string; // reçoit le bouton de copie des emails des résultats
+    message: string; // message après la copie
 }
 
 export interface MembersTableOptions {
@@ -84,4 +89,20 @@ export async function showMembersTable(fields: string[], datas: string[][], elem
     converter.datasViewElt={ id:elements.datas };
     converter.datasCounterElt={ id:elements.count };
     converter.refreshView();
+
+    // Copie des emails des résultats (filtre et recherche), toutes pages confondues
+    const copyElement=document.getElementById(elements.copyEmails)!;
+    const message=document.getElementById(elements.message)!;
+    copyElement.innerHTML=`<button class="btn-small">${icon("copy")} Copier les emails</button>`;
+    message.textContent="";
+    copyElement.querySelector("button")!.addEventListener("click", () => copyEmails(memberContacts(converter.datasValid), message));
+    // Le message ne vaut que pour les résultats copiés : effacé dès que le filtre ou la recherche change
+    // (propriétés plutôt qu'écouteurs : la liste peut être réaffichée, pour une autre saison, dans les mêmes éléments)
+    const clearMessage=() => { message.textContent=""; };
+    for(const id of [elements.filter, elements.search])
+    {
+        const element=document.getElementById(id)!;
+        element.oninput=clearMessage;
+        element.onchange=clearMessage;
+    }
 }

@@ -28,6 +28,7 @@ export class FreeDatas2HTML
     private _datas: ParseResults["datas"]=[];
     private _datas2Rend: {[index: string]:string}[]=[];
     private _nbDatasValid: number=0;
+    private _datasValid: {[index: string]:string}[]=[]; // données validant les filtres, toutes pages confondues
     private _firstDataShown: number=0; // rang de la première donnée affichée (pagination)
 
     // Le parseur, comme le render sont initialisés.
@@ -92,6 +93,12 @@ export class FreeDatas2HTML
     get datas2Rend(): {[index: string]:string}[]
     {
         return this._datas2Rend;
+    }
+
+    // Données validant les filtres (recherche, sélecteurs), dans l'ordre affiché, toutes pages confondues
+    get datasValid(): {[index: string]:string}[]
+    {
+        return this._datasValid;
     }
 
     // Retourne l'éventuelle fonction spécifique de classement associée à un champ
@@ -290,6 +297,7 @@ export class FreeDatas2HTML
         
         // Création du tableau des données à afficher :
         let datas2Display=[];
+        this._datasValid=[];
         let nbVisible=0, nbTotal=0;
         for (let row in this._datas)
         {
@@ -300,6 +308,8 @@ export class FreeDatas2HTML
                 valid=this.datasFilters[i].dataIsOk(this._datas[row]);
                 i++;
             }
+            if(valid)
+                this._datasValid.push(this._datas[row]);
             if(valid && nbTotal >= firstData && nbVisible < maxData)
             {
                 datas2Display.push(this._datas[row]);

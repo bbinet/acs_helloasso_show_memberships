@@ -8,7 +8,9 @@ import { InvoiceService, statusCategory, type InvoiceStatus } from "./InvoiceSer
 import type { Invoice } from "./InvoiceData.js";
 import type { Issuer } from "./InvoiceDocument";
 import { filterInvoices, NO_ACTIVITY, type FilterCriteria } from "./InvoiceFilter";
-import { emailList, toCsv, uniqueByEmail } from "./Export";
+import { toCsv } from "./Export";
+import { copyEmails } from "./CopyEmails";
+import { icon } from "./Icons";
 import { loadCharts, renderActivityStats, renderSeasonsStats, renderStats, type SeasonMembers } from "./AdminStats";
 import { loadArchive } from "./Archives";
 import { showMembersTable } from "./MembersTable";
@@ -44,15 +46,6 @@ const statusCell = (invoice: Invoice) => {
     return `<span class="badge ${badge}">${escape(status.status)}</span><br/><small>le ${frenchDate(status.date)}</small>${detail}`;
 };
 
-// Icônes des boutons (traits de 24 × 24, couleur du texte) : de chaque facture, et des factures sélectionnées
-const ICON_PATHS = {
-    preview: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-    download: '<path d="M12 3v12M7 10l5 5 5-5M4 19h16"/>',
-    send: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
-    csv: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M8 12h8M8 16h8M12 10v8"/>',
-    copy: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
-};
-const icon = (name: keyof typeof ICON_PATHS) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name]}</svg>`;
 // Bouton d'icône ; « highlighted » (en bleu) pour l'envoi d'une facture jamais envoyée
 const iconButton = (action: "preview" | "download" | "send", id: number, label: string, { highlighted = false, disabled = false } = {}) =>
     `<button class="btn-small icon-button${highlighted ? " btn-secondary" : ""}" data-action="${action}" data-id="${id}" title="${escape(label)}" aria-label="${escape(label)}" ${disabled ? "disabled" : ""}>${icon(action)}</button>`;
@@ -263,18 +256,7 @@ element("exportCsv").addEventListener("click", () => {
     URL.revokeObjectURL(link.href);
 });
 
-element("copyEmails").addEventListener("click", async () => {
-    const list = selectedInvoices();
-    const emails = emailList(list);
-    const count = uniqueByEmail(list).length;
-    try {
-        await navigator.clipboard.writeText(emails);
-        element("progress").textContent = `${count} adresse(s) copiée(s) : à coller dans le champ « Cci » d'un mail.`;
-    } catch {
-        // Presse-papiers refusé par le navigateur : adresses affichées pour un copier-coller à la main
-        prompt("Copier les adresses :", emails);
-    }
-});
+element("copyEmails").addEventListener("click", () => copyEmails(selectedInvoices(), element("progress")));
 
 // Listes des activités et des tarifs pour les filtres, telles que dans HelloAsso
 const fillSelect = (id: string, names: string[]) => element(id).insertAdjacentHTML("beforeend",
@@ -347,7 +329,8 @@ const showMembers = async (shown: string) => {
             [fields, datas] = [archive.fields, archived.members];
         }
         await showMembersTable(fields, datas,
-            { datas: "m-datas", count: "m-count", filter: "m-filter", search: "m-search", pages: "m-pages", paginationOptions: "m-paginationOptions" },
+            { datas: "m-datas", count: "m-count", filter: "m-filter", search: "m-search", pages: "m-pages", paginationOptions: "m-paginationOptions",
+              copyEmails: "m-copyEmails", message: "m-copyMessage" },
             { activitiesField: 4, searchFields: [0, 1, 2] });
     } catch (e) {
         console.error(e);

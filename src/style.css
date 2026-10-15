@@ -50,8 +50,10 @@ input.search { width:100%; }
 td.invoice-actions { white-space:nowrap; }
 .icon-button { padding:0.3rem 0.45rem; margin:0 0.1rem; line-height:0; }
 svg.icon { width:1.15rem; height:1.15rem; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-/* Icône devant le texte des boutons des factures sélectionnées */
-.action-block svg.icon { vertical-align:-0.2em; margin-right:0.2rem; }
+/* Icône devant le texte des boutons des factures sélectionnées et de la copie des emails */
+.action-block svg.icon, .results svg.icon { vertical-align:-0.2em; margin-right:0.2rem; }
+/* Liste des adhérents : nombre de résultats, et à sa droite la copie de leurs emails */
+.results { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0 1rem; }
 /* Page admin : onglets */
 nav.tabs { display:flex; gap:0.5rem; margin:1rem 0; border-bottom:2px solid #41403e; }
 nav.tabs button { border-bottom:none; border-radius:15px 15px 0 0; margin-bottom:-2px; }

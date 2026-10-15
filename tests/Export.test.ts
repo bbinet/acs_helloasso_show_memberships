@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emailList, toCsv } from "../src/Export";
+import { emailList, memberContacts, toCsv } from "../src/Export";
 import { invoice } from "./fixtures";
 
 describe("toCsv", () => {
@@ -33,5 +33,16 @@ describe("emailList", () => {
     it("retire les guillemets des noms, qui casseraient l'adresse", () => {
         expect(emailList([invoice(1, { firstName: "Jean \"Jeannot\"", lastName: "Dupont", email: "j@example.com" })]))
             .toBe('"Jean Jeannot Dupont" <j@example.com>');
+    });
+});
+
+describe("memberContacts", () => {
+    it("tire le prénom, le nom et l'email des lignes de la liste des adhérents, pour copier leurs emails", () => {
+        const rows = [
+            { "Prénom": "Jean", "Nom": "Dupont", "Entreprise": "SOPRA", "Email": "jean@example.com", "Activités": "Tennis" },
+            { "Prénom": "Jean", "Nom": "Dupont", "Entreprise": "SOPRA", "Email": "jean@example.com", "Activités": "Yoga" },
+            { "Prénom": "Marie", "Nom": "Durand", "Entreprise": "", "Email": "marie@example.com", "Activités": "" },
+        ];
+        expect(emailList(memberContacts(rows))).toBe('"Jean Dupont" <jean@example.com>, "Marie Durand" <marie@example.com>');
     });
 });

@@ -20,15 +20,22 @@ export function toCsv(invoices: Invoice[], statuses: Record<string, InvoiceStatu
     return "﻿" + [header, ...rows].map((row) => row.map(field).join(";")).join("\r\n");
 }
 
-// Une adhésion par adresse email (un payeur peut avoir réglé plusieurs adhésions)
-export function uniqueByEmail(invoices: Invoice[]): Invoice[] {
+// Destinataire d'un mail : une facture, ou une ligne de la liste des adhérents (voir memberContacts)
+export type Contact = Pick<Invoice, "firstName" | "lastName" | "email">;
+
+// Un destinataire par adresse email (un payeur peut avoir réglé plusieurs adhésions)
+export function uniqueByEmail<T extends Contact>(contacts: T[]): T[] {
     const seen = new Set<string>();
-    return invoices.filter((invoice) => !seen.has(invoice.email) && seen.add(invoice.email));
+    return contacts.filter((contact) => !seen.has(contact.email) && seen.add(contact.email));
 }
 
 // « "Prénom Nom" <email>, ... », une seule fois par adresse
-export function emailList(invoices: Invoice[]): string {
-    return uniqueByEmail(invoices)
-        .map((invoice) => `"${`${invoice.firstName} ${invoice.lastName}`.replace(/"/g, "")}" <${invoice.email}>`)
+export function emailList(contacts: Contact[]): string {
+    return uniqueByEmail(contacts)
+        .map((contact) => `"${`${contact.firstName} ${contact.lastName}`.replace(/"/g, "")}" <${contact.email}>`)
         .join(", ");
 }
+
+// Destinataires des lignes de la liste des adhérents (champs « Prénom », « Nom » et « Email » de acs.json)
+export const memberContacts = (rows: Record<string, string>[]): Contact[] =>
+    rows.map((row) => ({ firstName: row["Prénom"], lastName: row["Nom"], email: row["Email"] }));

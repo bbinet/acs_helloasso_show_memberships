@@ -83,8 +83,8 @@ La page `/admin/` est réservée au bureau. Elle a son propre mot de passe, diff
 adhérents, qui ne change pas. Elle a trois onglets.
 
 **Adhérents** (onglet ouvert par défaut) : la même liste que la page des adhérents, avec le filtre par activité,
-la recherche et le tri, pour la saison en cours ou, au choix, pour une saison archivée (téléchargée au premier
-choix, voir « Données des saisons archivées »).
+la recherche, le tri et la copie des emails des résultats, pour la saison en cours ou, au choix, pour une saison
+archivée (téléchargée au premier choix, voir « Données des saisons archivées »).
 
 **Factures et exports** : la liste des adhésions de la saison en cours (une par adhésion non remboursée), avec le
 téléphone des adhérents (visible seulement ici et dans l'export CSV), 100 par page (choix et pages en bas de

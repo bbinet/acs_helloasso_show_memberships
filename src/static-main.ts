@@ -12,7 +12,8 @@ const initialise=async () =>
         showDates(current);
         // Filtre sur les activités (5e champ), recherche sur le prénom, le nom et l'entreprise
         await showMembersTable(fields, datas,
-            { datas:"datas", count:"count", filter:"filter", search:"search", pages:"pages", paginationOptions:"paginationOptions" },
+            { datas:"datas", count:"count", filter:"filter", search:"search", pages:"pages", paginationOptions:"paginationOptions",
+              copyEmails:"copyEmails", message:"copyMessage" },
             { activitiesField:4, searchFields:[0,1,2] });
     } catch(e) {
         console.error(e);
