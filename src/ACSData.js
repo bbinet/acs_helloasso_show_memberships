@@ -1,12 +1,8 @@
 import { ApiV5Client as HelloAsso } from "helloasso";
 import cfg from "../config.json" with { type: "json" };
 import fs from "fs";
-import { activityNames, buildInvoice, isBillable, summarize } from "./InvoiceData.js";
+import { activityNames, buildInvoice, isBillable, summarize, title } from "./InvoiceData.js";
 import { decryptArchive, deriveArchiveKey, encryptArchive } from "./ArchiveCrypto.js";
-
-function title(str) {
-    return str.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
 
 // Saisons déclarées dans config.json, de la plus récente à la plus ancienne :
 // la première est la saison en cours, les suivantes sont archivées.
@@ -45,8 +41,8 @@ const MEMBER_FIELDS = ["Prénom", "Nom", "Entreprise", "Email", "Activités"];
 // Lignes de la liste des adhérents, une par adhésion
 // (adhésions remboursées, ou anonymisées par HelloAsso — pas d'adhérent et payeur vide — ignorées)
 const memberRows = (items) => items.filter(isBillable).map((item) => [
-    title(item.user.firstName.trim()),
-    title(item.user.lastName.trim()),
+    title(item.user.firstName),
+    title(item.user.lastName),
     item.customFields.find((elt) => elt.name == "Société").answer.toUpperCase(),
     item.payer.email,
     activityNames(item).join(", "),
@@ -94,8 +90,8 @@ export const GetData = async (season = seasons[0]) => MembersData(await GetItems
 // Une saison terminée ne changeant plus, elles ne sont récupérées sur HelloAsso qu'une fois (voir archives.sh).
 export const ARCHIVE_FILE = "gh-pages/archives.enc";
 // À augmenter quand le contenu change : le cron régénère alors archives.enc
-// (2 : sans l'option « N'oubliez pas ... » dans les activités des adhérents)
-export const ARCHIVE_VERSION = 2;
+// (2 : sans l'option « N'oubliez pas ... » dans les activités des adhérents ; 3 : majuscule après un tiret)
+export const ARCHIVE_VERSION = 3;
 export const archivedSeasons = () => seasons.slice(1).map((season) => season.name);
 
 // seasonsItems : adhésions HelloAsso de chaque saison archivée, de la plus récente à la plus ancienne
