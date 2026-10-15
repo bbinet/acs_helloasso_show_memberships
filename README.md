@@ -163,6 +163,32 @@ encodé en base64 (`base64 -w0 signature.png`), limité comme tout secret à 48 
 
 Changer un mot de passe, le jeton ou la signature republie les pages au prochain passage du cron.
 
+# Ligne de commande : adhérents dans le terminal
+
+`cli.sh` affiche ou exporte les adhérents d'une saison, lus directement sur
+HelloAsso avec `config.json` (les adhésions remboursées sont exclues) :
+
+    $ ./cli.sh                                  # saison en cours, une fiche par adhésion
+    $ ./cli.sh --season 2025-2026 --activity "foot|tennis"
+    $ ./cli.sh --search dupont --from 2026-09-01 --to 2026-09-30
+    $ ./cli.sh --format summary                 # nombre d'adhérents par activité
+    $ ./cli.sh --format summary-members         # idem, avec les adhérents de chaque activité
+    $ ./cli.sh --format csv > adherents.csv     # même CSV que l'export de la page admin
+    $ ./cli.sh --activity yoga --format emails  # adresses à coller dans un email
+    $ ./cli.sh --pattern '{lastName};{firstName};{email}'
+
+`--activity` et `--formula` sont des expressions régulières, sans tenir compte
+des majuscules. Le nombre d'adhésions s'affiche sur la sortie d'erreur, pour
+garder un fichier propre en cas de redirection. Toutes les options :
+`./cli.sh --help`.
+
+Complétion des options, formats et saisons dans bash : générer le script une
+fois (à refaire quand les saisons de `config.json` changent), puis le charger
+dans `~/.bashrc` (pour zsh : `--completion zsh` et `~/.zshrc`) :
+
+    $ ./cli.sh --completion bash > ~/.acs-cli-completion.bash
+    $ echo 'source ~/.acs-cli-completion.bash' >> ~/.bashrc
+
 # GitHub Actions
 
 Deux workflows ont besoin du secret `CONFIG_JSON` contenant tout le fichier

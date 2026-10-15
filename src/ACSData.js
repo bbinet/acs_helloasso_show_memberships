@@ -12,12 +12,15 @@ export const seasons = cfg.conf.seasons;
 export const seasonDir = (season) => season.name.replace(/\//g, "-");
 
 // Adhésions de la saison, telles que renvoyées par l'API HelloAsso
-export const GetItems = async (season = seasons[0]) =>
+// (logger : traces de la bibliothèque helloasso, sur la sortie standard par défaut)
+/** @param {any} [logger] */
+export const GetItems = async (season = seasons[0], logger) =>
 {
     const helloAsso = new HelloAsso({
         apiBase: cfg.conf.helloasso.api_base,
         clientId: cfg.credentials.helloasso.id,
         clientSecret:cfg.credentials.helloasso.secret,
+        logger,
     });
     let payload = {
         withDetails: "true",
